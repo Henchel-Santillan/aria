@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Aria</string>
+
+    <!-- Common -->
+    <string name="common_actionSnackBar">Close</string>
+
+    <!-- Main Activity -->
+    <string name="mainActivityTabLayout_tabRecord">Record</string>
+    <string name="mainActivityTabLayout_tabPlayback">Playback</string>
+
+    <!-- Navigation Graph -->
+    <string name="navGraph_recordFragmentLabel">Record</string>
+    <string name="navGraph_playbackFragmentLabel">Playback</string>
+
+    <!-- Record Fragment -->
+    <string name="recordFragment_fabCancelDescription">Cancel</string>
+    <string name="recordFragment_fabSaveDescription">Save</string>
+    <string name="recordFragment_fabRecordDescription">Record</string>
+
+    <string name="recordFragment_onDiscardYesClick">Recording discarded</string>
+
+    <!-- Discard Recording Dialog Fragment -->
+    <string name="discardRecordingDialog_title">Discard Recording</string>
+    <string name="discardRecordingDialog_message">Are you sure you want to discard this recording?</string>
+    <string name="discardRecordingDialog_positive">Yes</string>
+    <string name="discardRecordingDialog_negative">No</string>
+
+    <!-- Name Recording Dialog Fragment -->
+    <string name="nameRecordingDialog_title">Save Recording</string>
+    <string name="nameRecordingDialog_editTextHint">Recording Name</string>
+    <string name="nameRecordingDialog_positive">Save</string>
+    <string name="nameRecordingDialog_negative">Cancel</string>
+
+    <!-- Permission Context Dialog Fragment -->
+    <string name="permissionContextDialog_message">This app requires permission to record audio to be functional. If you deny this permission twice, you must manually set the permissions in Settings.</string>
+    <string name="permissionContextDialog_positive">OK</string>
+
+</resources>
