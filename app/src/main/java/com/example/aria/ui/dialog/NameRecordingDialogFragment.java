@@ -1,7 +1,5 @@
 package com.example.aria.ui.dialog;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -64,7 +62,7 @@ public class NameRecordingDialogFragment extends DialogFragment {
         saveButton.setOnClickListener((scopedView) -> {
             NameRecordingDialogFragmentListener listener = (NameRecordingDialogFragmentListener) getParentFragment();
             if (listener != null) {
-                String recordingName = editText.getEditableText().toString() + ".wav";
+                String recordingName = editText.getEditableText().toString() + ".mp4";
                 listener.onNameRecordSave(recordingName);
             }
             dismiss();

@@ -18,6 +18,7 @@
     <string name="recordFragment_fabRecordDescription">Record</string>
 
     <string name="recordFragment_onDiscardYesClick">Recording discarded</string>
+    <string name="recordFragment_recordingFailedStart">Error: Recorder failed to start. Please try again.</string>
 
     <!-- Discard Recording Dialog Fragment -->
     <string name="discardRecordingDialog_title">Discard Recording</string>
