@@ -2,6 +2,7 @@ package com.example.aria.ui;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
@@ -22,12 +24,27 @@ import com.example.aria.ui.dialog.NameRecordingDialogFragment;
 import com.example.aria.ui.dialog.PermissionContextDialogFragment;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class RecordFragment extends Fragment implements DiscardRecordingDialogFragment.DiscardRecordingDialogFragmentListener, NameRecordingDialogFragment.NameRecordingDialogFragmentListener {
 
-    FragmentRecordBinding binding;
+    private FragmentRecordBinding binding;
+    private MediaRecorder recorder;
+    private boolean isRecorderActive, isPaused;
+    private String defaultFileName;
 
     public RecordFragment() {
         super(R.layout.fragment_record);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        isRecorderActive = false;
+        isPaused = false;
     }
 
     @Nullable
@@ -40,12 +57,15 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         binding.fabRecord.setOnClickListener((scopedView) -> {
-            // Request permissions
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                // Initialize app
-                // E.g. enable the record button, setup the MediaPlayer, etc.
-                showCancelSaveFabs();
+                if (!isRecorderActive) {
+                    startRecording();
+                    showCancelSaveFabs();
 
+                } else {
+                    if (!isPaused) pauseRecording();
+                    else resumeRecording();
+                }
             } else {
                 // Ask for the RECORD_AUDIO permission directly
                 requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
@@ -53,20 +73,20 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         });
 
         binding.fabCancel.setOnClickListener((scopedView) -> {
-            // Suspend or pause recording
-            // Show the DiscardRecordingFragmentDialog
-
+            pauseRecording();
             DiscardRecordingDialogFragment dialog = new DiscardRecordingDialogFragment();
             dialog.show(getChildFragmentManager(), DiscardRecordingDialogFragment.TAG);
         });
 
         binding.fabSave.setOnClickListener((scopedView) -> {
-            // Stop recording
-            // Show the NameRecordingFragmentDialog
+            pauseRecording();
             NameRecordingDialogFragment dialog = new NameRecordingDialogFragment();
             dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
         });
     }
+
+    // TODO: Override other lifecycle functions to handle what happens when
+    // fragment is out of view, for example
 
     // Request permissions from the user to record voice
     private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -82,23 +102,79 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         binding.fabSave.animate().translationX(getResources().getDimension(R.dimen.standard_105));
     }
 
+    private void hideCancelSaveFabs() {
+        binding.fabSave.animate().translationX(0);
+        binding.fabCancel.animate().translationX(0);
+        binding.fabCancel.setImageResource(R.drawable.ic_baseline_mic_24);
+    }
+
     @Override
     public void onDiscardYesClick() {
+        stopRecording();
+        hideCancelSaveFabs();
+
         Snackbar snackbar = Snackbar.make(binding.fabCancel, R.string.recordFragment_onDiscardYesClick, Snackbar.LENGTH_SHORT);
-        snackbar.setAction(R.string.common_actionSnackBar, (view) -> {
-            snackbar.dismiss();
-        });
+        snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
         snackbar.show();
     }
 
     @Override
     public void onNameRecordSave(String name) {
+        stopRecording();
+        hideCancelSaveFabs();
+
         final String dialogText = "Recording " + name + " was saved.";
-        Snackbar snackbar = Snackbar.make(binding.fabCancel, dialogText, Snackbar.LENGTH_SHORT);
-        snackbar.setAction(R.string.common_actionSnackBar, (view) -> {
-            snackbar.dismiss();
-        });
+        Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_SHORT);
+        snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
         snackbar.show();
-        // Add badge to the TabLayout with (1) indicating new
+    }
+
+
+    //*** MediaRecorder Utilities ***//
+
+    private void startRecording() {
+        recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
+        String absolutePathEcd = requireContext().getExternalCacheDir().getAbsolutePath() + "/";
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", LocaleListCompat.getDefault().get(0));
+        defaultFileName = dateFormat.format(new Date()) + "_recording";
+        recorder.setOutputFile(absolutePathEcd + defaultFileName);
+
+        try {
+            recorder.prepare();
+        } catch (IOException exception) {
+            isRecorderActive = false;
+        }
+
+        recorder.start();
+        isPaused = false;
+        isRecorderActive = true;
+        binding.fabRecord.setImageResource(R.drawable.ic_baseline_pause_24);
+    }
+
+    private void stopRecording() {
+        recorder.stop();
+        recorder.reset();
+        recorder.release();
+
+        recorder = null;
+        isPaused = false;
+        isRecorderActive = false;
+        binding.fabRecord.setImageResource(R.drawable.ic_baseline_mic_24);
+    }
+
+    private void pauseRecording() {
+        recorder.pause();
+        isPaused = true;
+        binding.fabRecord.setImageResource(R.drawable.ic_baseline_play_arrow_24);
+    }
+
+    private void resumeRecording() {
+        recorder.resume();
+        isPaused = false;
+        binding.fabRecord.setImageResource(R.drawable.ic_baseline_pause_24);
     }
 }
