@@ -34,7 +34,6 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     private FragmentRecordBinding binding;
     private MediaRecorder recorder;
     private boolean isRecorderActive, isPaused;
-    private String defaultFileName;
 
     public RecordFragment() {
         super(R.layout.fragment_record);
@@ -140,7 +139,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
         String absolutePathEcd = requireContext().getExternalCacheDir().getAbsolutePath() + "/";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", LocaleListCompat.getDefault().get(0));
-        defaultFileName = dateFormat.format(new Date()) + "_recording";
+        String defaultFileName = dateFormat.format(new Date()) + "_recording";
         recorder.setOutputFile(absolutePathEcd + defaultFileName);
 
         try {

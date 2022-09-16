@@ -36,4 +36,13 @@
     <string name="permissionContextDialog_message">This app requires permission to record audio to be functional. If you deny this permission twice, you must manually set the permissions in Settings.</string>
     <string name="permissionContextDialog_positive">OK</string>
 
+    <!-- Playback List Fragment Layout -->
+    <string name="viewholderContextualActionBar_editTitle">Rename</string>
+    <string name="viewholderContextualActionBar_editDescription">Rename this audio record.</string>
+    <string name="viewholderContextualActionBar_deleteTitle">Delete</string>
+    <string name="viewholderContextualActionBar_deleteDescription">Delete this audio record</string>
+
+    <!-- Playback List Fragment RecyclerView ViewHolder Layout -->
+    <string name="playbackListViewHolder_imageDescription">Play Audio</string>
+
 </resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/viewholderContextualActionBar_optionEdit"
+        android:icon="@drawable/ic_baseline_edit_24"
+        android:title="@string/viewholderContextualActionBar_editTitle"
+        android:contentDescription="@string/viewHolderContextualActionBar_editDescription"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/viewholderContextualActionBar_optionDelete"
+        android:icon="@drawable/ic_baseline_delete_24"
+        android:title="@string/viewholderContextualActionBar_deleteTitle"
+        android:contentDescription="@string/viewholderContextualActionBar_deleteDescription"
+        app:showAsAction="ifRoom" />
+
+</menu>
