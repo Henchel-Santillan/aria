@@ -109,6 +109,7 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
         listDiffer.submitList(recordList);
     }
 
+
     //**** Diff ItemCallback implementation ****//
 
     DiffUtil.ItemCallback<AudioRecord> callback = new DiffUtil.ItemCallback<AudioRecord>() {

@@ -12,6 +12,15 @@
     <fragment
         android:id="@+id/playbackListFragment"
         android:name="com.example.aria.ui.PlaybackListFragment"
+        android:label="@string/navGraph_playbackListFragmentLabel">
+        <action
+            android:id="@+id/action_fromPlaybackList_toPlayback"
+            app:destination="@id/playbackFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/playbackFragment"
+        android:name="com.example.aria.ui.PlaybackFragment"
         android:label="@string/navGraph_playbackFragmentLabel" />
 
 </navigation>

@@ -6,6 +6,7 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.example.aria.db.entity.AudioRecord;
 
@@ -20,9 +21,13 @@ public interface AudioRecordDao {
     @Query("SELECT * FROM audioRecords where recordId = :id")
     LiveData<AudioRecord> getRecord(int id);
 
+    @Update
+    void updateRecord(AudioRecord record);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertRecord(AudioRecord record);
 
     @Delete
     void deleteRecord(AudioRecord record);
+
 }

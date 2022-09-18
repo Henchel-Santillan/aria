@@ -42,5 +42,4 @@ public class AudioRecordListViewModel extends AndroidViewModel {
     public LiveData<List<AudioRecord>> getRecords() {
         return records;
     }
-
 }

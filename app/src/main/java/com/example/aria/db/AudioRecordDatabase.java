@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.room.AutoMigration;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
@@ -13,7 +14,7 @@ import com.example.aria.db.converter.DateConverter;
 import com.example.aria.db.dao.AudioRecordDao;
 import com.example.aria.db.entity.AudioRecord;
 
-@Database(entities = {AudioRecord.class}, version = 1)
+@Database(entities = {AudioRecord.class}, version = 2, autoMigrations = {@AutoMigration(from = 1, to = 2)})
 @TypeConverters(DateConverter.class)
 public abstract class AudioRecordDatabase extends RoomDatabase {
 

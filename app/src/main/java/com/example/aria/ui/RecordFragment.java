@@ -25,14 +25,14 @@ import com.example.aria.ui.dialog.PermissionContextDialogFragment;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class RecordFragment extends Fragment implements DiscardRecordingDialogFragment.DiscardRecordingDialogFragmentListener, NameRecordingDialogFragment.NameRecordingDialogFragmentListener {
+public class RecordFragment extends Fragment implements DiscardRecordingDialogFragment.DiscardRecordingDialogFragmentListener, NameRecordingDialogFragment.NameRecordingDialogFragmentListener, CountUpTimer.OnTimerTickListener {
 
     private FragmentRecordBinding binding;
     private MediaRecorder recorder;
+    private CountUpTimer timer;
     private boolean isRecorderActive, isPaused;
 
     public RecordFragment() {
@@ -44,6 +44,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         super.onCreate(savedInstanceState);
         isRecorderActive = false;
         isPaused = false;
+        timer = new CountUpTimer(this);
     }
 
     @Nullable
@@ -84,9 +85,14 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         });
     }
 
-    // TODO: Override other lifecycle functions to handle what happens when
-    // fragment is out of view, for example
+    @Override
+    public void onDestroyView() {
+        binding = null;
+        super.onDestroyView();
+    }
 
+    // TODO:
+    // New ActivityResultContracts.RequestMultiplePermissions --> RECORD_AUDIO and WAKE_LOCK
     // Request permissions from the user to record voice
     private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         if (!isGranted) {
@@ -102,9 +108,8 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     }
 
     private void hideCancelSaveFabs() {
-        binding.fabSave.animate().translationX(0);
         binding.fabCancel.animate().translationX(0);
-        binding.fabCancel.setImageResource(R.drawable.ic_baseline_mic_24);
+        binding.fabSave.animate().translationX(0);
     }
 
     @Override
@@ -152,6 +157,8 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         isPaused = false;
         isRecorderActive = true;
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_pause_24);
+
+        timer.start();
     }
 
     private void stopRecording() {
@@ -163,17 +170,26 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         isPaused = false;
         isRecorderActive = false;
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_mic_24);
+
+        timer.stop();
     }
 
     private void pauseRecording() {
         recorder.pause();
         isPaused = true;
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_play_arrow_24);
+        timer.pause();
     }
 
     private void resumeRecording() {
         recorder.resume();
         isPaused = false;
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_pause_24);
+        timer.start();
+    }
+
+    @Override
+    public void onTimerTick(String duration) {
+        binding.countDownTimer.setText(duration);
     }
 }
