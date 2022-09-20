@@ -3,8 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.aria">
 
+    <!-- Dangerous Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- Normal Permissions -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
 
     <application
         android:name=".AriaApplication"
@@ -17,6 +23,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Aria"
         tools:targetApi="31">
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -26,6 +33,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name=".mediaplayer.AudioRecordPlayerService"
+                 android:exported="false" />
+
     </application>
 
 </manifest>
