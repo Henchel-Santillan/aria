@@ -32,8 +32,8 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
     private FragmentRecordBinding binding;
     private MediaRecorder recorder;
-    private CountUpTimer timer;
     private boolean isRecorderActive, isPaused;
+    private CountUpTimer timer;
 
     public RecordFragment() {
         super(R.layout.fragment_record);
@@ -91,13 +91,13 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         super.onDestroyView();
     }
 
-    // TODO:
-    // New ActivityResultContracts.RequestMultiplePermissions --> RECORD_AUDIO and WAKE_LOCK
+    // TODO: How to handle screen rotation? Lock in portrait mode?
+
     // Request permissions from the user to record voice
     private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         if (!isGranted) {
             // Show an AlertDialog explaining to the user why the app requires permission to record audio
-            DialogFragment dialog = new PermissionContextDialogFragment();
+            DialogFragment dialog = PermissionContextDialogFragment.newInstance(R.string.permissionContextDialog_messageAudioRecord);
             dialog.show(getChildFragmentManager(), PermissionContextDialogFragment.TAG);
         }
     });
@@ -191,5 +191,6 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     @Override
     public void onTimerTick(String duration) {
         binding.countDownTimer.setText(duration);
+        binding.amplitudeView.addAmplitude((float) recorder.getMaxAmplitude());
     }
 }

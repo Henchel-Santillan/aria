@@ -10,6 +10,7 @@ import android.media.session.MediaSessionManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.util.Log;
 
 import java.io.IOException;
 
@@ -25,6 +26,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     }
 
     private MediaPlayer mediaPlayer;
+    private String pathToAudioFile;
+
     private IBinder binder;
     private int savedResumePosition;
 
@@ -34,6 +37,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
     private AudioManager audioManager;
 
+    private static final int NOTIFICATION_ID = 420;
 
     //*** Service Lifecycle Methods ***/
 
@@ -41,7 +45,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     public void onCreate() {
         super.onCreate();
         binder = new AudioRecordPlayerBinder();
-
+        pathToAudioFile = "";
+        savedResumePosition = 0;
         // registerCallStateListener(); --> manage incoming phone calls during playback
     }
 
@@ -150,17 +155,46 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-
+        stop();
+        // removeNotification();
+        stopSelf();
     }
 
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int what, int extra) {
+        switch (what) {
+            case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                Log.d("MediaPlayer error: ", "MEDIA ERROR UNSUPPORTED " + extra);
+                break;
+            case MediaPlayer.MEDIA_ERROR_IO:
+                Log.d("MediaPlayer error: ", "MEDIA ERROR IO " + extra);
+                break;
+            case MediaPlayer.MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK:
+                Log.d("MediaPlayer error: ", "MEDIA ERROR NOT VALID FOR PROGRESSIVE PLAYBACK " + extra);
+                break;
+            case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                Log.d("MediaPlayer error: ", "MEDIA ERROR UNKNOWN " + extra);
+                break;
+            default: break;
+        }
         return false;
     }
 
     @Override
     public boolean onInfo(MediaPlayer mediaPlayer, int what, int extra) {
-        return false;   // No-op
+        switch (what) {
+            case MediaPlayer.MEDIA_INFO_AUDIO_NOT_PLAYING:
+                Log.d("MediaPlayer Info: ", "MEDIA INFO AUDIO NOT PLAYING " + extra);
+                break;
+            case MediaPlayer.MEDIA_INFO_NOT_SEEKABLE:
+                Log.d("MediaPlayer Info: ", "MEDIA INFO NOT SEEKABLE " + extra);
+                break;
+            case MediaPlayer.MEDIA_INFO_UNKNOWN:
+                Log.d("MediaPlayer Info: ", "MEDIA INFO UNKNOWN " + extra);
+                break;
+            default: break;
+        }
+        return false;
     }
 
     @Override
@@ -172,5 +206,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     public void onSeekComplete(MediaPlayer mediaPlayer) {
         // No-op
     }
+
+    //*** Notifications ***//
+
 
 }
