@@ -38,8 +38,11 @@
     <string name="nameRecordingDialog_negative">Cancel</string>
 
     <!-- Permission Context Dialog Fragment -->
-    <string name="permissionContextDialog_message">This app requires permission to record audio to be functional. If you deny this permission twice, you must manually set the permissions in Settings.</string>
-    <string name="permissionContextDialog_positive">OK</string>
+    <string name="permissionContextDialog_messageAudioRecord">This app requires permission to record audio to be functional. If you deny this permission twice, you must manually set the permissions in Settings.</string>
+    <string name="permissionContextDialog_messagePhoneState">This app requires permission to read your phone\'s state to make prioritize urgent actions, like phone calls, over the audio player service.</string>
+    <string name="permissionContextDialog_messageDefault">This app requires the requested permission to be functional.</string>
+    <string name="permissionContextDialog_negative">Dismiss</string>
+    <string name="permissionContextDialog_positive">Settings</string>
 
     <!-- Playback List Fragment Layout -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
@@ -51,5 +54,14 @@
     <string name="playbackListViewHolder_imageDescription">Play Audio</string>
 
     <!-- Playback Fragment -->
+
+
+    <!-- Audio Record Player Service -->
+    <string name="audioRecordPlayerService_notificationName">Audio Record Playback</string>
+    <string name="audioRecordPlayerService_notificationDescription">Audio Record Playback Controls</string>
+    <string name="audioRecordPlayerService_notificationActionPlay">Play</string>
+    <string name="audioRecordPlayerService_notificationActionPause">Pause</string>
+    <string name="audioRecordPlayerService_notificationActionNextFive">Forward Five</string>
+    <string name="audioRecordPlayerService_notificationActionPrevFive">Replay Five</string>
 
 </resources>

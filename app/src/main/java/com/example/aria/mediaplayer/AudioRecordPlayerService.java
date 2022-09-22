@@ -1,16 +1,35 @@
 package com.example.aria.mediaplayer;
 
+import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.os.Binder;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.RemoteException;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+
+import com.example.aria.R;
+import com.example.aria.db.entity.AudioRecord;
 
 import java.io.IOException;
 
@@ -25,6 +44,18 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         }
     }
 
+    public enum PlaybackState { RESUMED_PLAYING, PAUSED }
+
+    private static final int NOTIFICATION_ID = 420;
+    private static final String MEDIA_CHANNEL_ID = "media_channel";
+    private static final String MEDIA_SESSION_TAG = "AudioRecordPlayer";
+
+    private static final String NOTIF_ACTION_PLAY = "com.example.aria.mediaplayer.NOTIF_ACTION_PLAY";
+    private static final String NOTIF_ACTION_PAUSE = "com.example.aria.mediaplayer.NOTIF_ACTION_PAUSE";
+    private static final String NOTIF_ACTION_STOP = "com.example.aria.mediaplayer.NOTIF_ACTION_STOP";
+    private static final String NOTIF_ACTION_NEXT_FIVE = "com.example.aria.mediaplayer.NOTIF_ACTION_NEXT_FIVE";
+    private static final String NOTIF_ACTION_PREV_FIVE = "com.example.aria.mediaplayer.NOTIF_ACTION_PREV_FIVE";
+
     private MediaPlayer mediaPlayer;
     private String pathToAudioFile;
 
@@ -36,8 +67,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     private MediaController.TransportControls transportControls;
 
     private AudioManager audioManager;
+    private AudioRecord record;         // TODO: Initialize
 
-    private static final int NOTIFICATION_ID = 420;
 
     //*** Service Lifecycle Methods ***/
 
@@ -52,6 +83,19 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Only need to create NotificationChannel on API 26+ devices
+        createNotificationChannel();
+
+        if (mediaSessionManager == null) {
+            try {
+                initMediaSession();
+                initMediaPlayer();
+            } catch (RemoteException e) {
+                stopSelf();
+            }
+            createNotification(PlaybackState.RESUMED_PLAYING);
+        }
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -62,7 +106,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
     @Override
     public boolean onUnbind(Intent intent) {
-        // removeNotification
+        destroyNotification();
         return super.onUnbind(intent);
     }
 
@@ -71,6 +115,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         super.onDestroy();
         if (mediaPlayer != null)
             mediaPlayer.release();
+
+        destroyNotification();
     }
 
 
@@ -156,7 +202,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
         stop();
-        // removeNotification();
+        destroyNotification();
         stopSelf();
     }
 
@@ -207,7 +253,143 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         // No-op
     }
 
+
+    //*** MediaSession ***//
+
+    private void initMediaSession() throws RemoteException {
+        if (mediaSessionManager == null) {
+            mediaSessionManager = (MediaSessionManager) getSystemService(Context.MEDIA_SESSION_SERVICE);
+            mediaSession = new MediaSession(getApplicationContext(), MEDIA_SESSION_TAG);
+
+            transportControls = mediaSession.getController().getTransportControls();
+
+            // Indicate that the media session is ready to receive commits
+            mediaSession.setActive(true);
+
+            // Set the media session's metadata
+            updateSessionMetaData();
+
+            mediaSession.setCallback(new MediaSession.Callback() {
+                @Override
+                public void onPlay() {
+                    super.onPlay();
+                    resume();
+                    createNotification(PlaybackState.RESUMED_PLAYING);
+                }
+
+                @Override
+                public void onPause() {
+                    super.onPause();
+                    pause();
+                    createNotification(PlaybackState.PAUSED);
+                }
+
+                @Override
+                public void onStop() {
+                    super.onStop();
+                    destroyNotification();
+                    stopSelf();
+                }
+
+                @Override
+                public void onSeekTo(long position) {
+                    super.onSeekTo(position);
+                }
+            });
+        }
+    }
+
+    private void updateSessionMetaData() {
+        mediaSession.setMetadata(new MediaMetadata.Builder()
+                .putString(MediaMetadata.METADATA_KEY_TITLE, record.title)
+                .build()
+        );
+    }
+
+
+    //*** AudioManager ***//
+
+    private boolean requestAudioFocus() {
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        // TODO: Replace with AudioFocusRequest overload
+        int result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+    }
+
     //*** Notifications ***//
 
+    private void createNotification(final PlaybackState state) {
+        final int playPauseActionId, playPauseNotifDrawableId;
+
+        if (state == PlaybackState.RESUMED_PLAYING) {
+            playPauseActionId = 1;
+            playPauseNotifDrawableId = R.drawable.ic_baseline_pause_24;
+        } else {
+            playPauseActionId = 0;
+            playPauseNotifDrawableId = R.drawable.ic_baseline_play_arrow_24;
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MEDIA_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_baseline_headphones_24)
+                .setShowWhen(false)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(MediaSessionCompat.Token.fromToken(mediaSession.getSessionToken()))
+                        .setShowActionsInCompactView(0, 1, 2))
+                .setContentTitle(record.title)
+                .addAction(R.drawable.ic_baseline_replay_5_24, getString(R.string.audioRecordPlayerService_notificationActionPrevFive), getNotificationAction(2))
+                .addAction(playPauseNotifDrawableId, getString(R.string.audioRecordPlayerService_notificationActionPause), getNotificationAction(playPauseActionId))
+                .addAction(R.drawable.ic_baseline_forward_5_24, getString(R.string.audioRecordPlayerService_notificationActionNextFive), getNotificationAction(3));
+
+        // Show the notification
+        NotificationManagerCompat manager = NotificationManagerCompat.from(this);
+        manager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+    private void destroyNotification() {
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.cancel(NOTIFICATION_ID);
+
+    }
+
+    @Nullable
+    private PendingIntent getNotificationAction(final int actionId) {
+        Intent intent = new Intent(this, AudioRecordPlayerService.class);
+
+        switch (actionId) {
+            case 0:
+                intent.setAction(NOTIF_ACTION_PLAY);
+                break;
+            case 1:
+                intent.setAction(NOTIF_ACTION_PAUSE);
+                break;
+            case 2:
+                intent.setAction(NOTIF_ACTION_PREV_FIVE);
+                break;
+            case 3:
+                intent.setAction(NOTIF_ACTION_NEXT_FIVE);
+            default: return null;
+        }
+
+        return PendingIntent.getService(this, actionId, intent, PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    @SuppressLint("ObsoleteSdkInt")
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String name = getString(R.string.audioRecordPlayerService_notificationName);
+            String description = getString(R.string.audioRecordPlayerService_notificationDescription);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+
+            NotificationChannel channel = new NotificationChannel(MEDIA_CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            channel.setShowBadge(false);
+
+            // Register the channel with the system
+            NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.createNotificationChannel(channel);
+        }
+    }
 
 }
