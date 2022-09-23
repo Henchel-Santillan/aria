@@ -8,6 +8,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
@@ -17,6 +19,7 @@ import android.media.session.MediaSessionManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.RemoteException;
@@ -57,17 +60,28 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     private static final String NOTIF_ACTION_PREV_FIVE = "com.example.aria.mediaplayer.NOTIF_ACTION_PREV_FIVE";
 
     private MediaPlayer mediaPlayer;
-    private String pathToAudioFile;
+    private String pathToAudioFile;         // TODO: Init (via Bundle? or ViewModel)
 
     private IBinder binder;
     private int savedResumePosition;
+
+    //*** Media Session ***//
 
     private MediaSession mediaSession;
     private MediaSessionManager mediaSessionManager;
     private MediaController.TransportControls transportControls;
 
+    //*** Audio Management ***//
+
     private AudioManager audioManager;
+    private AudioAttributes audioAttributes;
+    private AudioFocusRequest audioFocusRequest;
     private AudioRecord record;         // TODO: Initialize
+
+    private final Object focusLock = new Object();
+    private boolean resumeOnFocusGain;
+    private boolean playbackDelayed;
+
 
 
     //*** Service Lifecycle Methods ***/
@@ -78,6 +92,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         binder = new AudioRecordPlayerBinder();
         pathToAudioFile = "";
         savedResumePosition = 0;
+        resumeOnFocusGain = false;
+        playbackDelayed = false;
         // registerCallStateListener(); --> manage incoming phone calls during playback
     }
 
@@ -186,13 +202,6 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
 
     //*** MediaPlayer Listeners ***//
-
-    @Override
-    public void onAudioFocusChange(int focusState) {
-        switch (focusState) {
-
-        }
-    }
 
     @Override
     public void onBufferingUpdate(MediaPlayer mediaPlayer, int i) {
@@ -307,13 +316,79 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     }
 
 
-    //*** AudioManager ***//
+    //*** Audio Management ***//
 
     private boolean requestAudioFocus() {
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        // TODO: Replace with AudioFocusRequest overload
-        int result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
+        audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+
+        audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(audioAttributes)
+                .setAcceptsDelayedFocusGain(true)
+                .setWillPauseWhenDucked(true)
+                .setOnAudioFocusChangeListener(this)
+                .build();
+
+        int result = audioManager.requestAudioFocus(audioFocusRequest);
+        synchronized (focusLock) {
+            switch (result) {
+                case AudioManager.AUDIOFOCUS_REQUEST_GRANTED:
+                case AudioManager.AUDIOFOCUS_REQUEST_FAILED:
+                    playbackDelayed = false;
+                    break;
+                case AudioManager.AUDIOFOCUS_REQUEST_DELAYED:
+                    playbackDelayed = true;
+                    break;
+                default: break;
+            }
+        }
+
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+    }
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+
+            case AudioManager.AUDIOFOCUS_GAIN:
+                // Resume playback; app has been granted audio focus gain
+                if (playbackDelayed || resumeOnFocusGain) {
+                    synchronized (focusLock) {
+                        resumeOnFocusGain = false;
+                        playbackDelayed = false;
+                    }
+
+                    if (mediaPlayer == null)
+                        initMediaPlayer();
+                    else if (mediaPlayer.isPlaying())
+                        mediaPlayer.start();
+                    mediaPlayer.setVolume(1.0f, 1.0f);
+                }
+                break;
+
+            case AudioManager.AUDIOFOCUS_LOSS:
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                // All transient losses are handled the same way since the playback from this service will never be ducked
+                // Permanent loss of audio focus; pause playback and delay 10 seconds before stopping completely
+                synchronized (focusLock) {
+                    resumeOnFocusGain = focusChange != AudioManager.AUDIOFOCUS_LOSS && mediaPlayer.isPlaying();
+                    playbackDelayed = false;
+                }
+
+                // Stop the playback and release the MediaPlayer
+                if (mediaPlayer.isPlaying())
+                    mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+                break;
+
+            default: break;
+        }
     }
 
     //*** Notifications ***//
