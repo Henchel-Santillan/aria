@@ -21,6 +21,7 @@ public abstract class AudioRecordDatabase extends RoomDatabase {
     public static final String DATABASE_NAME = "audio-record-db";
 
     public abstract AudioRecordDao recordDao();
+
     private static volatile AudioRecordDatabase sInstance;
     private final MutableLiveData<Boolean> databaseBuilt = new MutableLiveData<>();
 
@@ -29,7 +30,8 @@ public abstract class AudioRecordDatabase extends RoomDatabase {
             synchronized (AudioRecordDatabase.class) {
                 if (sInstance == null) {
                     sInstance = Room.databaseBuilder(context.getApplicationContext(), AudioRecordDatabase.class, DATABASE_NAME).build();
-                    sInstance.databaseBuilt.postValue(true);
+                    if (context.getApplicationContext().getDatabasePath(DATABASE_NAME).exists())
+                        sInstance.databaseBuilt.postValue(true);
                 }
             }
         }
@@ -39,4 +41,5 @@ public abstract class AudioRecordDatabase extends RoomDatabase {
     public LiveData<Boolean> isDatabaseBuilt() {
         return databaseBuilt;
     }
+
 }

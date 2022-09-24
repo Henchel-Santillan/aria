@@ -42,4 +42,17 @@ public class AudioRecordListViewModel extends AndroidViewModel {
     public LiveData<List<AudioRecord>> getRecords() {
         return records;
     }
+
+    public void updateRecord(AudioRecord record) {
+        repository.updateRecord(record);
+    }
+
+    public void insertRecord(AudioRecord record) {
+        repository.insertRecord(record);
+    }
+
+    public void deleteRecord(AudioRecord record) {
+        repository.deleteRecord(record);
+    }
+
 }

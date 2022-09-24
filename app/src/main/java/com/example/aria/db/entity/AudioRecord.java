@@ -19,4 +19,5 @@ public class AudioRecord {
         this.duration = duration;
         this.dateCreated = dateCreated;
     }
+
 }
