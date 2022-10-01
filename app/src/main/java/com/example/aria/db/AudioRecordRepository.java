@@ -1,5 +1,6 @@
 package com.example.aria.db;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
@@ -14,7 +15,7 @@ public class AudioRecordRepository {
     private final AudioRecordDatabase database;
     private final MediatorLiveData<List<AudioRecord>> observableRecords;
 
-    private AudioRecordRepository(final AudioRecordDatabase database) {
+    private AudioRecordRepository(@NonNull final AudioRecordDatabase database) {
         this.database = database;
 
         observableRecords = new MediatorLiveData<>();
@@ -33,6 +34,8 @@ public class AudioRecordRepository {
         }
         return sInstance;
     }
+
+    /* NOTE: In practice, having LiveData in the repository does not adhere to the Repository design pattern. */
 
     public LiveData<List<AudioRecord>> getRecords() {
         return observableRecords;

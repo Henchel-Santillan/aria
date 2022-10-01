@@ -24,11 +24,13 @@ import com.example.aria.R;
 import com.example.aria.databinding.FragmentPlaybackBinding;
 import com.example.aria.mediaplayer.AudioRecordPlayerService;
 import com.example.aria.ui.dialog.PermissionContextDialogFragment;
+import com.example.aria.viewmodel.AudioRecordListViewModel;
 
 public class PlaybackFragment extends Fragment {
 
     private FragmentPlaybackBinding binding;
     private AudioRecordPlayerService audioRecordPlayerService;
+    private AudioRecordListViewModel viewModel;
     private boolean serviceBound;
 
     public PlaybackFragment() {
@@ -59,7 +61,7 @@ public class PlaybackFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-
+        // Populate the bindings using the information retrieved from the ViewModel
     }
 
     @Override

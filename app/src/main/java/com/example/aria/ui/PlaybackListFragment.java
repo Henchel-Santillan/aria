@@ -17,6 +17,8 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.aria.R;
@@ -30,8 +32,10 @@ import java.util.List;
 
 public class PlaybackListFragment extends Fragment implements NameRecordingDialogFragment.NameRecordingDialogFragmentListener {
 
-    private FragmentPlaybackListBinding binding;
     private AudioRecordAdapter adapter;
+    private AudioRecordListViewModel viewModel;
+
+    private FragmentPlaybackListBinding binding;
     private ActionMode actionMode;
 
     public PlaybackListFragment() {
@@ -42,6 +46,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         actionMode = null;
+        viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
     }
 
     @Nullable
@@ -58,9 +63,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         recordRecyclerView.setAdapter(adapter);
 
         adapter.setClickItemListener((scopedView, position) -> {
-            // Navigate to the PlaybackFragment
-
-            // Pass Bundles Over, Containing the filePath and the fileName
+            Navigation.findNavController(scopedView).navigate(PlaybackListFragmentDirections.actionFromPlaybackListToPlayback());
         });
 
         adapter.setLongClickItemListener((scopedView, position) -> {
@@ -71,7 +74,25 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
             }
         });
 
-        final AudioRecordListViewModel viewModel = new ViewModelProvider(this).get(AudioRecordListViewModel.class);
+        // Create an ItemTouchHelper to facilitate swipe-delete action
+        ItemTouchHelper helper = new ItemTouchHelper(   // TODO: Future release: define dragDirs
+                new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;   // TODO: Future release: support item drag reordering
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                // TODO: Future release: left -> Add to favourites, right -> Delete
+                int position = viewHolder.getAdapterPosition();
+                viewModel.deleteRecord(adapter.getRecordAt(position));
+            }
+        });
+
+        // Attach the ItemTouchHelper to the RecyclerView
+        helper.attachToRecyclerView(recordRecyclerView);
+
         subscribeUi(viewModel.getRecords());
     }
 
@@ -82,7 +103,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         super.onDestroyView();
     }
 
-    private void subscribeUi(LiveData<List<AudioRecord>> liveData) {
+    private void subscribeUi(@NonNull LiveData<List<AudioRecord>> liveData) {
         liveData.observe(getViewLifecycleOwner(), audioRecords -> {
             if (audioRecords != null) {
                 binding.setIsLoading(false);
@@ -93,47 +114,55 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         });
     }
 
-
+    // TODO: Implement multiple selection and set CAB title accordingly
     //**** Callback for the Contextual Action Bar ****//
     ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
         @Override
-        public boolean onCreateActionMode(ActionMode actionMode, Menu menu) {
-            MenuInflater inflater = actionMode.getMenuInflater();
+        public boolean onCreateActionMode(@NonNull ActionMode mode, Menu menu) {
+            MenuInflater inflater = mode.getMenuInflater();
             inflater.inflate(R.menu.viewholder_contextual_action_bar, menu);
             return true;
         }
 
         @Override
-        public boolean onPrepareActionMode(ActionMode actionMode, Menu menu) {
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
             return false;   // No-op
         }
 
         @SuppressLint("NonConstantResourceId")
         @Override
-        public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
+        public boolean onActionItemClicked(ActionMode mode, @NonNull MenuItem menuItem) {
             switch (menuItem.getItemId()) {
+                case R.id.viewHolderContextualActionBar_optionInfo:
+                    // TODO: Launch a "DetailsDialog"
+                    mode.finish();
+                    return true;
                 case R.id.viewholderContextualActionBar_optionEdit:
                     DialogFragment dialog = new NameRecordingDialogFragment();
                     dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
-                    actionMode.finish();
+                    mode.finish();
                     return true;
                 case R.id.viewholderContextualActionBar_optionDelete:
-                    // Delete the item from the RecyclerView
-                    actionMode.finish();
+                    // Delete all long-clicked selected items
+                    for (int position : adapter.getLongClickedPositions())
+                        viewModel.deleteRecord(adapter.getRecordAt(position));
+                    mode.finish();
                     return true;
                 default: return false;
             }
         }
 
         @Override
-        public void onDestroyActionMode(ActionMode actionMode) {
+        public void onDestroyActionMode(ActionMode mode) {
             actionMode = null;
         }
     };
 
     @Override
     public void onNameRecordSave(String name) {
-        // Update the title of the AudioRecord given the selectedPosition
-
+        // Update the title of the AudioRecord at the selected position
+        int longClickedPosition = adapter.getLongClickedPositions().get(0);
+        AudioRecord record = adapter.getRecordAt(longClickedPosition);
+        viewModel.updateRecord(record);
     }
 }

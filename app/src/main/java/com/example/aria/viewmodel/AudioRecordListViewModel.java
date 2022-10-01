@@ -29,7 +29,7 @@ public class AudioRecordListViewModel extends AndroidViewModel {
 
         repository = ((AriaApplication) application).getRepository();
 
-        // The default is the empty query, since Fts config has not been set up with this AudioRecord db
+        // The default is the empty query, since the AudioRecord db does not have Fts configured
         records = Transformations.switchMap(savedStateHandle.getLiveData("QUERY", null),
                 (Function<CharSequence, LiveData<List<AudioRecord>>>) query -> repository.getRecords());
     }
@@ -41,6 +41,10 @@ public class AudioRecordListViewModel extends AndroidViewModel {
 
     public LiveData<List<AudioRecord>> getRecords() {
         return records;
+    }
+
+    public LiveData<AudioRecord> getRecord(final int recordId) {
+        return repository.getRecord(recordId);
     }
 
     public void updateRecord(AudioRecord record) {

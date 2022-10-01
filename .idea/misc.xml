@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/hench/AndroidStudioProjects/Aria/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Users/hench/AndroidStudioProjects/Aria/app/src/main/res/layout/fragment_audio_record_details.xml" value="0.2076923076923077" />
         <entry key="..\:/Users/hench/AndroidStudioProjects/Aria/app/src/main/res/layout/fragment_dialog_name_edit.xml" value="0.22735507246376813" />
         <entry key="..\:/Users/hench/AndroidStudioProjects/Aria/app/src/main/res/layout/fragment_dialog_name_recording.xml" value="0.14453125" />
         <entry key="..\:/Users/hench/AndroidStudioProjects/Aria/app/src/main/res/layout/fragment_playback.xml" value="0.1984375" />

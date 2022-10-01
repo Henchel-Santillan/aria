@@ -16,12 +16,16 @@ import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.aria.R;
 import com.example.aria.databinding.FragmentRecordBinding;
+import com.example.aria.db.entity.AudioRecord;
 import com.example.aria.ui.dialog.DiscardRecordingDialogFragment;
 import com.example.aria.ui.dialog.NameRecordingDialogFragment;
 import com.example.aria.ui.dialog.PermissionContextDialogFragment;
+import com.example.aria.viewmodel.AudioRecordListViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
@@ -83,6 +87,8 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
             NameRecordingDialogFragment dialog = new NameRecordingDialogFragment();
             dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
         });
+
+        final AudioRecordListViewModel viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
     }
 
     @Override
@@ -91,7 +97,6 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         super.onDestroyView();
     }
 
-    // TODO: How to handle screen rotation? Lock in portrait mode?
 
     // Request permissions from the user to record voice
     private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -127,6 +132,9 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         stopRecording();
         hideCancelSaveFabs();
 
+        // TODO: Save to database --> PlaybackListFragment should refresh
+
+
         final String dialogText = "Recording " + name + " was saved.";
         Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_SHORT);
         snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
@@ -134,7 +142,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     }
 
 
-    //*** MediaRecorder Utilities ***//
+    //*** MediaRecorder ***//
 
     private void startRecording() {
         recorder = new MediaRecorder();
@@ -188,9 +196,13 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         timer.start();
     }
 
+
+    //*** Count-up Timer ***//
+
     @Override
     public void onTimerTick(String duration) {
         binding.countDownTimer.setText(duration);
         binding.amplitudeView.addAmplitude((float) recorder.getMaxAmplitude());
     }
+
 }

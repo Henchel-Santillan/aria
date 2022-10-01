@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.aria.R;
 import com.example.aria.db.entity.AudioRecord;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -56,14 +57,20 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
 
             itemView.setOnClickListener(view -> {
                 int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION)
+                if (position != RecyclerView.NO_POSITION) {
                     clickItemListener.onItemClick(view, position);
+
+                    // When an item is selected, navigation to PlaybackFragment occurs.
+                    // At this point, the selection should be cleared.
+                    longClickedPositions.clear();
+                }
             });
 
             itemView.setOnLongClickListener(view -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     longClickItemListener.onItemLongClick(view, position);
+                    longClickedPositions.add(position);
                     return true;
                 }
                 return false;
@@ -81,9 +88,11 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
     //****  Adapter *****//
 
     private final AsyncListDiffer<AudioRecord> listDiffer;
+    private final List<Integer> longClickedPositions;
 
     public AudioRecordAdapter() {
         listDiffer = new AsyncListDiffer<AudioRecord>(this, callback);
+        longClickedPositions = new ArrayList<>();
     }
 
     @NonNull
@@ -107,6 +116,14 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
 
     public void submitList(List<AudioRecord> recordList) {
         listDiffer.submitList(recordList);
+    }
+
+    public List<Integer> getLongClickedPositions() {
+        return longClickedPositions;
+    }
+
+    public AudioRecord getRecordAt(final int position) {
+        return listDiffer.getCurrentList().get(position);
     }
 
 

@@ -46,9 +46,11 @@
 
     <!-- Playback List Fragment Layout -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
-    <string name="viewholderContextualActionBar_editDescription">Rename this audio record.</string>
+    <string name="viewholderContextualActionBar_editDescription">Rename this audio record</string>
     <string name="viewholderContextualActionBar_deleteTitle">Delete</string>
     <string name="viewholderContextualActionBar_deleteDescription">Delete this audio record</string>
+    <string name="viewHolderContextualActionBar_infoTitle">Details</string>
+    <string name="viewHolderContextualActionBar_infoDescription">Get the details of audio record</string>
 
     <!-- Playback List Fragment RecyclerView ViewHolder Layout -->
     <string name="playbackListViewHolder_imageDescription">Play Audio</string>

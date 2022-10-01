@@ -47,6 +47,7 @@ public class NameRecordingDialogFragment extends DialogFragment {
                 if (charSequence.length() <= 0) {
                     inputLayout.setError("Empty name not allowed.");
                     inputLayout.setErrorEnabled(true);
+                    editText.requestFocus();
                 } else {
                     inputLayout.setErrorEnabled(false);
                 }

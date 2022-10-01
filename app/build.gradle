@@ -50,7 +50,7 @@ dependencies {
 
 
     //*** Fragment Support ***//
-    def fragment_version = "1.5.2"
+    def fragment_version = "1.5.3"
 
     // Java language implementation
     implementation "androidx.fragment:fragment:$fragment_version"
@@ -104,6 +104,7 @@ dependencies {
 
 
     //*** Androidx Media Support ***//
-    def media_version = "1.1.0"
+
+    def media_version = "1.6.0"
     implementation "androidx.media:media:$media_version"
 }
