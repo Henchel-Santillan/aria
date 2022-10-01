@@ -107,4 +107,8 @@ dependencies {
 
     def media_version = "1.6.0"
     implementation "androidx.media:media:$media_version"
+
+
+    //*** Preference Screen Support ***//
+    implementation "androidx.preference:preference:1.2.0"
 }

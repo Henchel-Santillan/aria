@@ -5,6 +5,9 @@ import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -14,10 +17,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.example.aria.R;
 import com.example.aria.databinding.FragmentRecordBinding;
@@ -35,9 +42,11 @@ import java.util.Date;
 public class RecordFragment extends Fragment implements DiscardRecordingDialogFragment.DiscardRecordingDialogFragmentListener, NameRecordingDialogFragment.NameRecordingDialogFragmentListener, CountUpTimer.OnTimerTickListener {
 
     private FragmentRecordBinding binding;
-    private MediaRecorder recorder;
     private boolean isRecorderActive, isPaused;
     private CountUpTimer timer;
+
+    private MediaRecorder recorder;
+    private AudioRecordListViewModel viewModel;
 
     public RecordFragment() {
         super(R.layout.fragment_record);
@@ -49,6 +58,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         isRecorderActive = false;
         isPaused = false;
         timer = new CountUpTimer(this);
+        viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
     }
 
     @Nullable
@@ -88,7 +98,25 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
             dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
         });
 
-        final AudioRecordListViewModel viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
+        // Add a menu to the RecordFragment. For now, only the overflow is required.
+        MenuHost host = requireActivity();
+        host.addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_record, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.recordMenu_optionSettings:
+                        // Navigate to the SettingsFragment
+                        Navigation.findNavController(menuItem.getActionView()).navigate(R.id.action_fromRecord_toSettings);
+                        return true;
+                    default: return false;
+                }
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -132,9 +160,11 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         stopRecording();
         hideCancelSaveFabs();
 
-        // TODO: Save to database --> PlaybackListFragment should refresh
+        // Construct the saved AudioRecord with the given name and metadata
+        // Insert into the database using the ViewModel
 
 
+        // Insert the new Audio Record into the database using the ViewModel
         final String dialogText = "Recording " + name + " was saved.";
         Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_SHORT);
         snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());

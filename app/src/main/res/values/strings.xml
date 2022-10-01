@@ -12,6 +12,7 @@
     <string name="navGraph_recordFragmentLabel">Record</string>
     <string name="navGraph_playbackListFragmentLabel">Playback List</string>
     <string name="navGraph_playbackFragmentLabel">Playback</string>
+    <string name="navGraph_settingsFragmentLabel">Settings</string>
 
     <!-- Record Fragment -->
     <string name="recordFragment_timerStartText">00:00:00</string>
@@ -21,6 +22,9 @@
 
     <string name="recordFragment_onDiscardYesClick">Recording discarded</string>
     <string name="recordFragment_recordingFailedStart">Error: Recorder failed to start. Please try again.</string>
+
+    <!-- Record Fragment Menu -->
+    <string name="recordMenu_optionSettingsTitle">Settings</string>
 
     <!-- Discard Recording Dialog Fragment -->
     <string name="discardRecordingDialog_title">Discard Recording</string>
@@ -56,6 +60,12 @@
     <string name="playbackListViewHolder_imageDescription">Play Audio</string>
 
     <!-- Playback Fragment -->
+
+    <!-- Settings Fragment -->
+    <string name="settingsFragment_removeTitle">Recently removed</string>
+    <string name="settingsFragment_removeSummary">Send deleted recordings to "Recently removed"</string>
+    <string name="settingsFragment_feedbackTitle">Feedback</string>
+    <string name="settingsFragment_feedbackSummary">Report technical issues or suggest new features</string>
 
 
     <!-- Audio Record Player Service -->
