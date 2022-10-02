@@ -16,7 +16,6 @@ import com.example.aria.db.entity.AudioRecord;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.AudioRecordViewHolder> {
 
     //**** Click Listener Interfaces ****//
@@ -139,7 +138,10 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
         @Override
         public boolean areContentsTheSame(@NonNull AudioRecord oldItem, @NonNull AudioRecord newItem) {
             return oldItem.title.equals(newItem.title) &&
-                    oldItem.duration == newItem.duration;
+                    oldItem.filePath.equals(newItem.filePath) &&
+                    oldItem.duration.equals(newItem.duration) &&
+                    oldItem.amplitudePath.equals(newItem.amplitudePath) &&
+                    oldItem.dateCreated == newItem.dateCreated;
         }
     };
 

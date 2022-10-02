@@ -18,12 +18,14 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintLeft_toLeftOf="parent" />
         
-        <com.example.aria.ui.AmplitudeView
+       <com.example.aria.ui.AmplitudeView
             android:id="@+id/amplitudeView"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_height="400px"
+            app:layout_constraintBottom_toTopOf="@id/countDownTimer"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginBottom="30dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabCancel"

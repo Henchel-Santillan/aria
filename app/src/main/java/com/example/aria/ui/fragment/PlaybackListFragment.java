@@ -1,4 +1,4 @@
-package com.example.aria.ui;
+package com.example.aria.ui.fragment;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;

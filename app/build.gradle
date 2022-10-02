@@ -111,4 +111,8 @@ dependencies {
 
     //*** Preference Screen Support ***//
     implementation "androidx.preference:preference:1.2.0"
+
+
+    //*** RecyclerView Selection Support ***//
+    implementation 'androidx.recyclerview:recyclerview-selection:1.2.0-alpha01'
 }

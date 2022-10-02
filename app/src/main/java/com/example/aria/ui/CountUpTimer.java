@@ -49,9 +49,9 @@ public class CountUpTimer {
 
         String formatted = "";
         if (hours > 0)
-            formatted = String.format(LocaleListCompat.getDefault().get(0), "%02d:%02d:%02d:%02d", hours, minutes, seconds, milliseconds);
+            formatted = String.format(LocaleListCompat.getDefault().get(0), "%02d:%02d:%02d.%02d", hours, minutes, seconds, milliseconds);
         else
-            formatted = String.format(LocaleListCompat.getDefault().get(0), "%02d:%02d:%02d", minutes, seconds, milliseconds);
+            formatted = String.format(LocaleListCompat.getDefault().get(0), "%02d:%02d.%02d", minutes, seconds, milliseconds);
 
         return formatted;
     }

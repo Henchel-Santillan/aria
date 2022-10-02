@@ -23,6 +23,15 @@ public class NameRecordingDialogFragment extends DialogFragment {
         void onNameRecordSave(String name);
     }
 
+    @NonNull
+    public static NameRecordingDialogFragment newInstance(String defaultFileName) {
+        NameRecordingDialogFragment dialog = new NameRecordingDialogFragment();
+        Bundle args = new Bundle();
+        args.putString("defaultFileName", defaultFileName);
+        dialog.setArguments(args);
+        return dialog;
+    }
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentDialogNameRecordingBinding.inflate(inflater, container, false);
@@ -31,13 +40,14 @@ public class NameRecordingDialogFragment extends DialogFragment {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        Bundle args = getArguments();
+        String defaultFileName = (args == null) ? "" : args.getString("defaultFileName");
 
         TextInputEditText editText = binding.nameRecordingDialogFragmentInputEditText;
         TextInputLayout inputLayout = binding.nameRecordingDialogFragmentTextInputLayout;
         Button saveButton = binding.nameRecordingDialogFragmentSaveButton;
-        saveButton.setEnabled(false);
 
+        editText.setText(defaultFileName);
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int start, int before, int count) { /* No-op */ }

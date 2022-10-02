@@ -46,15 +46,15 @@ public class AudioRecordRepository {
     }
 
     public void updateRecord(final AudioRecord record) {
-        database.recordDao().updateRecord(record);
+        AudioRecordDatabase.dbWriteExecutor.execute(() -> database.recordDao().updateRecord(record));
     }
 
     public void insertRecord(final AudioRecord record) {
-        database.recordDao().insertRecord(record);
+        AudioRecordDatabase.dbWriteExecutor.execute(() -> database.recordDao().insertRecord(record));
     }
 
     public void deleteRecord(final AudioRecord record) {
-        database.recordDao().deleteRecord(record);
+        AudioRecordDatabase.dbWriteExecutor.execute(() -> database.recordDao().deleteRecord(record));
     }
 
 }

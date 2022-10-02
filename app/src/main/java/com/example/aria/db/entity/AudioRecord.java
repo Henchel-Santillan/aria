@@ -6,17 +6,20 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "audioRecords")
 public class AudioRecord {
 
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     public int recordId;
 
     public String title;
-    public long duration;
+    public String filePath;
+    public String duration;
+    public String amplitudePath;
     public long dateCreated;
 
-    public AudioRecord(final int recordId, final String title, final long duration, final long dateCreated) {
-        this.recordId = recordId;
+    public AudioRecord(final String title, final String filePath, final String duration, final String amplitudePath, final long dateCreated) {
         this.title = title;
+        this.filePath = filePath;
         this.duration = duration;
+        this.amplitudePath = amplitudePath;
         this.dateCreated = dateCreated;
     }
 

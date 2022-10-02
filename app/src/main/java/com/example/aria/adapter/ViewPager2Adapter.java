@@ -6,8 +6,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.example.aria.ui.RecordFragment;
-import com.example.aria.ui.PlaybackListFragment;
+import com.example.aria.ui.fragment.RecordFragment;
+import com.example.aria.ui.fragment.PlaybackListFragment;
 
 public class ViewPager2Adapter extends FragmentStateAdapter {
 

@@ -1,4 +1,4 @@
-package com.example.aria.ui;
+package com.example.aria.ui.fragment;
 
 import android.Manifest;
 import android.content.ComponentName;

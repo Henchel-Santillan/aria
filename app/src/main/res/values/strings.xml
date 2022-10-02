@@ -15,7 +15,7 @@
     <string name="navGraph_settingsFragmentLabel">Settings</string>
 
     <!-- Record Fragment -->
-    <string name="recordFragment_timerStartText">00:00:00</string>
+    <string name="recordFragment_timerStartText">00:00.00</string>
     <string name="recordFragment_fabCancelDescription">Cancel</string>
     <string name="recordFragment_fabSaveDescription">Save</string>
     <string name="recordFragment_fabRecordDescription">Record</string>

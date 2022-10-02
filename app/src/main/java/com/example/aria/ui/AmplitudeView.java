@@ -1,8 +1,6 @@
 package com.example.aria.ui;
 
 import android.content.Context;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -10,68 +8,78 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AmplitudeView extends View {
 
-    private Paint paint;
     private final List<Float> amplitudes;
     private final List<RectF> blocks;
 
-    private final float BLOCK_RADIUS = 6f;
-    private final float BLOCK_WIDTH = 9f;
-    private final float BLOCK_SEPARATION = 6f;
-    private final int MAX_BLOCKS = (int) (getDisplayWidth() / (BLOCK_WIDTH + BLOCK_SEPARATION));
+    private final Float radius = 6f;
+    private final Float w = 9f;
+    private final Float d = 6f;
 
-    public AmplitudeView(Context context, AttributeSet attributeSet) {
-        super(context, attributeSet);
+    private Float screenWidth = 0f;
+    private Float screenHeight = 400f;
+
+    private int maxSpikes = 0;
+
+    private final Paint paint;
+
+    public AmplitudeView(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+
+        this.amplitudes = new ArrayList<>();
+        this.blocks = new ArrayList<>();
+        paint = new Paint();
         paint.setColor(Color.rgb(148, 0, 211));
-        amplitudes = new ArrayList<>();
-        blocks = new ArrayList<>();
-    }
 
-    @Override
-    public void draw(@NonNull Canvas canvas) {
-        super.draw(canvas);
-        for (RectF block : blocks) {
-            canvas.drawRoundRect(block, BLOCK_RADIUS, BLOCK_RADIUS, paint);
-        }
+        screenWidth = (float) getResources().getDisplayMetrics().widthPixels;
+        maxSpikes = (int) (screenWidth / (w +d));
     }
 
     public void addAmplitude(Float amplitude) {
-        float norm = (float) Math.min(amplitude.intValue(), getDisplayWidth());
+        Float norm = (float) Math.min(amplitude.intValue(), 400);
         amplitudes.add(norm);
 
-
         blocks.clear();
-        final List<Float> lastAmps = new ArrayList<>();
+        List<Float> amps = new ArrayList<>();
+        // Takelast in Java
+        for (int i = maxSpikes; i < amplitudes.size(); i++) {
+            amps.add(amplitudes.get(i));
+        }
 
-        for (int i = MAX_BLOCKS; i < amplitudes.size(); ++i)
-            lastAmps.add(amplitudes.get(i));
+        for (int i = 0; i < amps.size(); i++) {
+            float left = screenWidth - i * (w+d);
+            float top = screenHeight / 2 - amps.get(i) / 2;
+            float right = left + w;
+            float bottom = top+ amps.get(i);
 
-        for (int i = 0; i < lastAmps.size(); ++i) {
-            blocks.add(new RectF(getDisplayWidth() - i * (BLOCK_WIDTH + BLOCK_SEPARATION),
-                                 0f,
-                                 getDisplayWidth() - i * (BLOCK_WIDTH + BLOCK_SEPARATION) + BLOCK_WIDTH,
-                                 lastAmps.get(i)));
+            blocks.add(new RectF(left, top, right, bottom));
         }
 
         invalidate();
     }
 
-    private int getDisplayWidth() {
-        return (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-                ? Resources.getSystem().getDisplayMetrics().widthPixels
-                : Resources.getSystem().getDisplayMetrics().heightPixels;
+    public List<Float> clear() {
+        List<Float> amps = new ArrayList<>(amplitudes);
+
+        amplitudes.clear();
+        blocks.clear();
+        invalidate();
+
+        return amps;
     }
 
-    private int getDisplayHeight() {
-        return (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-                ? Resources.getSystem().getDisplayMetrics().heightPixels
-                : Resources.getSystem().getDisplayMetrics().widthPixels;
+    @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+        for (RectF block : blocks) {
+            canvas.drawRoundRect(block, radius, radius, paint);
+        }
     }
 
 }

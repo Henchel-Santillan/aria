@@ -1,9 +1,11 @@
-package com.example.aria.ui;
+package com.example.aria.ui.fragment;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,24 +24,29 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 
 import com.example.aria.R;
 import com.example.aria.databinding.FragmentRecordBinding;
 import com.example.aria.db.entity.AudioRecord;
+import com.example.aria.ui.CountUpTimer;
 import com.example.aria.ui.dialog.DiscardRecordingDialogFragment;
 import com.example.aria.ui.dialog.NameRecordingDialogFragment;
 import com.example.aria.ui.dialog.PermissionContextDialogFragment;
 import com.example.aria.viewmodel.AudioRecordListViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class RecordFragment extends Fragment implements DiscardRecordingDialogFragment.DiscardRecordingDialogFragmentListener, NameRecordingDialogFragment.NameRecordingDialogFragmentListener, CountUpTimer.OnTimerTickListener {
+
+    private static final String LOG_TAG = RecordFragment.class.getSimpleName();
 
     private FragmentRecordBinding binding;
     private boolean isRecorderActive, isPaused;
@@ -48,6 +55,12 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     private MediaRecorder recorder;
     private AudioRecordListViewModel viewModel;
 
+    // Important attributes and containers to generate an Audio Record
+    private String absolutePathEcd;
+    private String fileName;
+    private String recordingDuration;
+    private List<Float> amplitudes;
+
     public RecordFragment() {
         super(R.layout.fragment_record);
     }
@@ -55,8 +68,14 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         isRecorderActive = false;
         isPaused = false;
+        absolutePathEcd = "";
+        fileName = "";
+        recordingDuration = "";
+        amplitudes = new ArrayList<>();
+
         timer = new CountUpTimer(this);
         viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
     }
@@ -94,7 +113,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
         binding.fabSave.setOnClickListener((scopedView) -> {
             pauseRecording();
-            NameRecordingDialogFragment dialog = new NameRecordingDialogFragment();
+            NameRecordingDialogFragment dialog = NameRecordingDialogFragment.newInstance(fileName);
             dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
         });
 
@@ -106,12 +125,12 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
                 menuInflater.inflate(R.menu.menu_record, menu);
             }
 
+            @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 switch (menuItem.getItemId()) {
                     case R.id.recordMenu_optionSettings:
-                        // Navigate to the SettingsFragment
-                        Navigation.findNavController(menuItem.getActionView()).navigate(R.id.action_fromRecord_toSettings);
+                        // TODO: Navigate to the SettingsFragment
                         return true;
                     default: return false;
                 }
@@ -153,6 +172,9 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         Snackbar snackbar = Snackbar.make(binding.fabCancel, R.string.recordFragment_onDiscardYesClick, Snackbar.LENGTH_SHORT);
         snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
         snackbar.show();
+
+        // Reset the timer
+        binding.countDownTimer.setText(getString(R.string.recordFragment_timerStartText));
     }
 
     @Override
@@ -160,15 +182,34 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         stopRecording();
         hideCancelSaveFabs();
 
-        // Construct the saved AudioRecord with the given name and metadata
-        // Insert into the database using the ViewModel
 
+        String filePath = absolutePathEcd + name;
+        String amplitudesPath = filePath.substring(0, filePath.length() - 4);   // .mp4 is 4 characters
 
         // Insert the new Audio Record into the database using the ViewModel
         final String dialogText = "Recording " + name + " was saved.";
-        Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_SHORT);
+        Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_LONG);
         snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
         snackbar.show();
+
+        // Reset the timer
+        binding.countDownTimer.setText(getString(R.string.recordFragment_timerStartText));
+
+        // Save the waveform generated during recording to a File specified by the "amplitudesPath" path
+        try (FileOutputStream fos = new FileOutputStream(amplitudesPath);
+             ObjectOutputStream out = new ObjectOutputStream(fos)) {
+
+            out.writeObject(amplitudes);
+
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "onNameRecordSave: IOException with either FileOutputStream or ObjectOutputStream", e);
+            // TODO: Should show some sort of UI element
+        }
+
+        // Construct the saved AudioRecord with the given name and metadata
+        // Insert into the database using the ViewModel
+        AudioRecord record = new AudioRecord(name, filePath, recordingDuration, amplitudesPath, new Date().getTime());
+        viewModel.insertRecord(record);
     }
 
 
@@ -180,10 +221,10 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
-        String absolutePathEcd = requireContext().getExternalCacheDir().getAbsolutePath() + "/";
+        absolutePathEcd = requireContext().getExternalCacheDir().getAbsolutePath() + "/";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", LocaleListCompat.getDefault().get(0));
-        String defaultFileName = dateFormat.format(new Date()) + "_recording";
-        recorder.setOutputFile(absolutePathEcd + defaultFileName);
+        fileName = dateFormat.format(new Date()) + "_recording";
+        recorder.setOutputFile(absolutePathEcd + fileName);
 
         try {
             recorder.prepare();
@@ -210,6 +251,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_mic_24);
 
         timer.stop();
+        amplitudes = binding.amplitudeView.clear();
     }
 
     private void pauseRecording() {
@@ -232,6 +274,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     @Override
     public void onTimerTick(String duration) {
         binding.countDownTimer.setText(duration);
+        recordingDuration = duration;
         binding.amplitudeView.addAmplitude((float) recorder.getMaxAmplitude());
     }
 
