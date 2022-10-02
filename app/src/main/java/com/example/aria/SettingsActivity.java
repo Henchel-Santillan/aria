@@ -27,7 +27,8 @@ public class SettingsActivity extends AppCompatActivity {
         // Add the SettingsFragment
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.settingsFragment_layout, new SettingsFragment())
+                .replace(R.id.settingsFragment_layout, SettingsFragment.class, null)
+                .setReorderingAllowed(true)
                 .commit();
     }
 }

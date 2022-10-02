@@ -36,11 +36,20 @@
 
         <activity
             android:name=".SettingsActivity"
-            android:label="@string/settingsFragmentLabel"
+            android:label="@string/settingsActivityLabel"
             android:parentActivityName=".MainActivity">
                 <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value=".MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".PlaybackActivity"
+            android:label="@string/playbackActivityLabel"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
         </activity>
 
         <service android:name=".mediaplayer.AudioRecordPlayerService"

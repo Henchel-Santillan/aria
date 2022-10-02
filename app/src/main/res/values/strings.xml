@@ -14,8 +14,8 @@
     <!-- Fragment and Activity Labels -->
     <string name="recordFragmentLabel">Record</string>
     <string name="playbackListFragmentLabel">Playback List</string>
-    <string name="playbackFragmentLabel">Playback</string>
-    <string name="settingsFragmentLabel">Settings</string>
+    <string name="playbackActivityLabel">Playback</string>
+    <string name="settingsActivityLabel">Settings</string>
 
     <!-- Record Fragment -->
     <string name="recordFragment_timerStartText">00:00.00</string>

@@ -1,6 +1,7 @@
 package com.example.aria.ui.fragment;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -17,10 +18,10 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.aria.PlaybackActivity;
 import com.example.aria.R;
 import com.example.aria.adapter.AudioRecordAdapter;
 import com.example.aria.databinding.FragmentPlaybackListBinding;
@@ -63,7 +64,8 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         recordRecyclerView.setAdapter(adapter);
 
         adapter.setClickItemListener((scopedView, position) -> {
-            Navigation.findNavController(scopedView).navigate(PlaybackListFragmentDirections.actionFromPlaybackListToPlayback());
+            Intent intent = new Intent(requireActivity(), PlaybackActivity.class);
+            startActivity(intent);
         });
 
         adapter.setLongClickItemListener((scopedView, position) -> {
