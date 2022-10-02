@@ -5,7 +5,7 @@
 
     <item
         android:id="@+id/recordMenu_optionSettings"
-        android:title="@string/recordMenu_optionSettingsTitle"
+        android:title="@string/mainMenu_optionSettingsTitle"
         app:showAsAction="never" />
 
 </menu>

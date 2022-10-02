@@ -116,26 +116,6 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
             NameRecordingDialogFragment dialog = NameRecordingDialogFragment.newInstance(fileName);
             dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
         });
-
-        // Add a menu to the RecordFragment. For now, only the overflow is required.
-        MenuHost host = requireActivity();
-        host.addMenuProvider(new MenuProvider() {
-            @Override
-            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                menuInflater.inflate(R.menu.menu_record, menu);
-            }
-
-            @SuppressLint("NonConstantResourceId")
-            @Override
-            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-                switch (menuItem.getItemId()) {
-                    case R.id.recordMenu_optionSettings:
-                        // TODO: Navigate to the SettingsFragment
-                        return true;
-                    default: return false;
-                }
-            }
-        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -251,6 +231,9 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_mic_24);
 
         timer.stop();
+
+        // Save a copy of the amplitude data in the UI Controller
+        // so that the object can be written to a file via an output stream
         amplitudes = binding.amplitudeView.clear();
     }
 

@@ -7,7 +7,7 @@
     <fragment
         android:id="@+id/recordFragment"
         android:name="com.example.aria.ui.fragment.RecordFragment"
-        android:label="@string/navGraph_recordFragmentLabel">
+        android:label="@string/recordFragmentLabel">
         <action
             android:id="@+id/action_fromRecord_toSettings"
             app:destination="@id/settingsFragment" />
@@ -16,7 +16,7 @@
     <fragment
         android:id="@+id/playbackListFragment"
         android:name="com.example.aria.ui.fragment.PlaybackListFragment"
-        android:label="@string/navGraph_playbackListFragmentLabel">
+        android:label="@string/playbackListFragmentLabel">
         <action
             android:id="@+id/action_fromPlaybackList_toPlayback"
             app:destination="@id/playbackFragment" />
@@ -25,11 +25,11 @@
     <fragment
         android:id="@+id/playbackFragment"
         android:name="com.example.aria.ui.fragment.PlaybackFragment"
-        android:label="@string/navGraph_playbackFragmentLabel" />
+        android:label="@string/playbackFragmentLabel" />
 
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.aria.ui.fragment.SettingsFragment"
-        android:label="@string/navGraph_settingsFragmentLabel" />
+        android:label="@string/settingsFragmentLabel" />
 
 </navigation>

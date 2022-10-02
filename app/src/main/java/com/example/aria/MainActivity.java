@@ -1,10 +1,18 @@
 package com.example.aria;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.example.aria.adapter.ViewPager2Adapter;
 import com.google.android.material.tabs.TabLayout;
@@ -40,6 +48,29 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }).attach();
+
+        // Set up the app bar. It is activity-owned, and only the overflow is (currently) required.
+        MenuHost host = MainActivity.this;
+        host.addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_main, menu);
+            }
+
+            // Keep switch-case in the event more menu items will be added
+            @SuppressLint("NonConstantResourceId")
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.recordMenu_optionSettings:
+                        // Start the Settings Activity
+                        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                        startActivity(intent);
+                        return true;
+                    default: return false;
+                }
+            }
+        });
     }
 
 }
