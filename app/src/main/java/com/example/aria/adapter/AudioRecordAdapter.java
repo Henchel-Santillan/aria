@@ -6,45 +6,26 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.os.LocaleListCompat;
+import androidx.recyclerview.selection.ItemDetailsLookup;
+import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.aria.R;
 import com.example.aria.db.entity.AudioRecord;
+import com.example.aria.recyclerview.LongItemDetail;
 
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
-public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.AudioRecordViewHolder> {
-
-    //**** Click Listener Interfaces ****//
-
-    public interface OnClickItemListener {
-        void onItemClick(View view, int position);
-    }
-
-    public interface OnLongClickItemListener {
-        void onItemLongClick(View view, int position);
-    }
-
-    private OnClickItemListener clickItemListener;
-    private OnLongClickItemListener longClickItemListener;
-
-    public final void setClickItemListener(OnClickItemListener clickItemListener) {
-        if (clickItemListener != null)
-            this.clickItemListener = clickItemListener;
-    }
-
-    public final void setLongClickItemListener(OnLongClickItemListener longClickItemListener) {
-        if (longClickItemListener != null)
-            this.longClickItemListener = longClickItemListener;
-    }
-
+public class AudioRecordAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     //**** ViewHolder *****//
 
-    public class AudioRecordViewHolder extends RecyclerView.ViewHolder {
+    public static class AudioRecordViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView titleLabel, metaLabel;
 
@@ -53,33 +34,23 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
 
             titleLabel = itemView.findViewById(R.id.listItem_title);
             metaLabel = itemView.findViewById(R.id.listItem_meta);
-
-            itemView.setOnClickListener(view -> {
-                int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    clickItemListener.onItemClick(view, position);
-
-                    // When an item is selected, navigation to PlaybackFragment occurs.
-                    // At this point, the selection should be cleared.
-                    longClickedPositions.clear();
-                }
-            });
-
-            itemView.setOnLongClickListener(view -> {
-                int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    longClickItemListener.onItemLongClick(view, position);
-                    longClickedPositions.add(position);
-                    return true;
-                }
-                return false;
-            });
         }
 
-        public void bindTo(@NonNull AudioRecord record) {
+        public void bindTo(@NonNull AudioRecord record, boolean isSelected) {
             titleLabel.setText(record.title);
-            metaLabel.setText(""); // TODO:
-            // Do stuff with the duration and the dateCreated, i.e. the meta information
+
+            // Format the dateCreated first before using with setText
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", LocaleListCompat.getDefault().get(0));
+
+            String metaLabelText = record.duration + " | " + format.format(new Date(record.dateCreated));
+            metaLabel.setText(metaLabelText);
+
+            itemView.setSelected(isSelected);
+        }
+
+        public ItemDetailsLookup.ItemDetails<Long> getItemDetails() {
+            int position = getBindingAdapterPosition();
+            return new LongItemDetail(position, getItemId());
         }
     }
 
@@ -87,11 +58,11 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
     //****  Adapter *****//
 
     private final AsyncListDiffer<AudioRecord> listDiffer;
-    private final List<Integer> longClickedPositions;
+    private SelectionTracker<Long> selectionTracker;
 
     public AudioRecordAdapter() {
-        listDiffer = new AsyncListDiffer<AudioRecord>(this, callback);
-        longClickedPositions = new ArrayList<>();
+        listDiffer = new AsyncListDiffer<>(this, callback);
+        this.setHasStableIds(true);
     }
 
     @NonNull
@@ -103,9 +74,9 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
     }
 
     @Override
-    public void onBindViewHolder(@NonNull AudioRecordViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         AudioRecord record = listDiffer.getCurrentList().get(position);
-        holder.bindTo(record);
+        ((AudioRecordViewHolder) holder).bindTo(record, selectionTracker.isSelected(getItemId(position)));
     }
 
     @Override
@@ -113,16 +84,21 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<AudioRecordAdapter.
         return listDiffer.getCurrentList().size();
     }
 
+    @Override
+    public long getItemId(int position) {
+        return (long) position;
+    }
+
     public void submitList(List<AudioRecord> recordList) {
         listDiffer.submitList(recordList);
     }
 
-    public List<Integer> getLongClickedPositions() {
-        return longClickedPositions;
+    public AudioRecord getRecordAt(int position) {
+        return listDiffer.getCurrentList().get(position);
     }
 
-    public AudioRecord getRecordAt(final int position) {
-        return listDiffer.getCurrentList().get(position);
+    public void setSelectionTracker(SelectionTracker<Long> selectionTracker) {
+        this.selectionTracker = selectionTracker;
     }
 
 

@@ -48,6 +48,10 @@
     <string name="permissionContextDialog_negative">Dismiss</string>
     <string name="permissionContextDialog_positive">Settings</string>
 
+    <!-- Playback List Fragment -->
+    <string name="playbackListFragment_recordDelete">Deleted recording</string>
+    <string name="playbackListFragment_undoDelete">Undo</string>
+
     <!-- Playback List Fragment Layout -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
     <string name="viewholderContextualActionBar_editDescription">Rename this audio record</string>
