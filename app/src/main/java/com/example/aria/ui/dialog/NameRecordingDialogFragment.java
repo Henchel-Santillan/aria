@@ -17,7 +17,7 @@ import com.google.android.material.textfield.TextInputLayout;
 
 public class NameRecordingDialogFragment extends DialogFragment {
 
-    FragmentDialogNameRecordingBinding binding;
+    private FragmentDialogNameRecordingBinding binding;
 
     public interface NameRecordingDialogFragmentListener {
         void onNameRecordSave(String name);
@@ -79,7 +79,7 @@ public class NameRecordingDialogFragment extends DialogFragment {
             dismiss();
         });
 
-        binding.nameRecordingDialogFragmentCancelButton.setOnClickListener((scopedView) -> dismiss() );
+        binding.nameRecordingDialogFragmentCancelButton.setOnClickListener((scopedView) -> dismiss());
     }
 
     public static String TAG = "NameRecordingDialogFragment";
