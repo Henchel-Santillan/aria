@@ -1,15 +1,11 @@
 package com.example.aria.ui.fragment;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -19,11 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.os.LocaleListCompat;
-import androidx.core.view.MenuHost;
-import androidx.core.view.MenuProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.aria.R;
@@ -149,9 +142,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         stopRecording();
         hideCancelSaveFabs();
 
-        Snackbar snackbar = Snackbar.make(binding.fabCancel, R.string.recordFragment_onDiscardYesClick, Snackbar.LENGTH_SHORT);
-        snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
-        snackbar.show();
+        showCloseableSnackbar(binding.fabCancel, getString(R.string.recordFragment_onDiscardYesClick), false);
 
         // Reset the timer
         binding.countDownTimer.setText(getString(R.string.recordFragment_timerStartText));
@@ -162,12 +153,12 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         stopRecording();
         hideCancelSaveFabs();
 
-
         String filePath = absolutePathEcd + name;
         String amplitudesPath = filePath.substring(0, filePath.length() - 4);   // .mp4 is 4 characters
 
-        // Insert the new Audio Record into the database using the ViewModel
         final String dialogText = "Recording " + name + " was saved.";
+        showCloseableSnackbar(binding.fabSave, dialogText, true);
+
         Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_LONG);
         snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
         snackbar.show();
@@ -190,6 +181,12 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         // Insert into the database using the ViewModel
         AudioRecord record = new AudioRecord(name, filePath, recordingDuration, amplitudesPath, new Date().getTime());
         viewModel.insertRecord(record);
+    }
+
+    private void showCloseableSnackbar(View view, String message, boolean isLong) {
+        Snackbar snackbar = Snackbar.make(view, message, isLong? Snackbar.LENGTH_LONG : Snackbar.LENGTH_SHORT);
+        snackbar.setAction(R.string.common_actionSnackBar, (scopedView) -> snackbar.dismiss());
+        snackbar.show();
     }
 
 

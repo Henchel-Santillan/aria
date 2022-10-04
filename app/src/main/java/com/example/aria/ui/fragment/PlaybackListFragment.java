@@ -1,7 +1,6 @@
 package com.example.aria.ui.fragment;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -18,26 +17,36 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.selection.SelectionPredicates;
+import androidx.recyclerview.selection.SelectionTracker;
+import androidx.recyclerview.selection.StorageStrategy;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.aria.PlaybackActivity;
 import com.example.aria.R;
 import com.example.aria.adapter.AudioRecordAdapter;
 import com.example.aria.databinding.FragmentPlaybackListBinding;
 import com.example.aria.db.entity.AudioRecord;
+import com.example.aria.recyclerview.LongItemDetailsLookup;
+import com.example.aria.recyclerview.LongItemKeyProvider;
 import com.example.aria.ui.dialog.NameRecordingDialogFragment;
+import com.example.aria.ui.dialog.YesNoDialogFragment;
 import com.example.aria.viewmodel.AudioRecordListViewModel;
+import com.google.android.material.snackbar.Snackbar;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class PlaybackListFragment extends Fragment implements NameRecordingDialogFragment.NameRecordingDialogFragmentListener {
+public class PlaybackListFragment extends Fragment implements NameRecordingDialogFragment.NameRecordingDialogFragmentListener, YesNoDialogFragment.YesNoDialogFragmentListener {
 
     private AudioRecordAdapter adapter;
     private AudioRecordListViewModel viewModel;
 
     private FragmentPlaybackListBinding binding;
     private ActionMode actionMode;
+    private SelectionTracker<Long> selectionTracker;
 
     public PlaybackListFragment() {
         super(R.layout.fragment_playback_list);
@@ -48,6 +57,10 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         super.onCreate(savedInstanceState);
         actionMode = null;
         viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
+
+        if (savedInstanceState != null) {
+            selectionTracker.onRestoreInstanceState(savedInstanceState);
+        }
     }
 
     @Nullable
@@ -63,39 +76,49 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         adapter = new AudioRecordAdapter();
         recordRecyclerView.setAdapter(adapter);
 
-        adapter.setClickItemListener((scopedView, position) -> {
-            Intent intent = new Intent(requireActivity(), PlaybackActivity.class);
-            startActivity(intent);
-        });
+        recordRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        recordRecyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL));
 
-        adapter.setLongClickItemListener((scopedView, position) -> {
-            // Only create an ActionMode using the callback for the CAB if one does not already exist
-            if (actionMode == null) {
-                actionMode = requireActivity().startActionMode(actionModeCallback);
-                scopedView.setSelected(true);
-            }
-        });
+        // Create RecyclerView SelectionTracker to better facilitate click and long click actions
+        selectionTracker = new SelectionTracker.Builder<>(
+                "audio_tracker",
+                recordRecyclerView,
+                new LongItemKeyProvider(recordRecyclerView),
+                new LongItemDetailsLookup(recordRecyclerView),
+                StorageStrategy.createLongStorage())
+                .withSelectionPredicate(SelectionPredicates.createSelectAnything())
+                .withOnItemActivatedListener((item, e) -> true)
+                .build();
 
-        // Create an ItemTouchHelper to facilitate swipe-delete action
-        ItemTouchHelper helper = new ItemTouchHelper(   // TODO: Future release: define dragDirs
-                new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        selectionTracker.addObserver(new SelectionTracker.SelectionObserver<Long>() {
             @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;   // TODO: Future release: support item drag reordering
-            }
+             public void onSelectionChanged() {
+                 final int selected = selectionTracker.getSelection().size();
 
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                // TODO: Future release: left -> Add to favourites, right -> Delete
-                int position = viewHolder.getAdapterPosition();
-                viewModel.deleteRecord(adapter.getRecordAt(position));
-            }
-        });
+                 if (selected > 0) {
+                    if (actionMode == null)
+                        actionMode = requireActivity().startActionMode(actionModeCallback);
 
-        // Attach the ItemTouchHelper to the RecyclerView
-        helper.attachToRecyclerView(recordRecyclerView);
+                    // TODO: Should only count unselected items that become selected
+                    actionMode.setTitle(selected + " selected");
+                    actionMode.invalidate();
+
+                 } else {
+                     actionMode.finish();
+                     actionMode = null;
+                 }
+             }
+         });
+
+        adapter.setSelectionTracker(selectionTracker);
 
         subscribeUi(viewModel.getRecords());
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        selectionTracker.onSaveInstanceState(outState);
     }
 
     @Override
@@ -116,7 +139,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         });
     }
 
-    // TODO: Implement multiple selection and set CAB title accordingly
     //**** Callback for the Contextual Action Bar ****//
     ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
         @Override
@@ -127,8 +149,11 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         }
 
         @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            return false;   // No-op
+        public boolean onPrepareActionMode(ActionMode mode, @NonNull Menu menu) {
+            int size = selectionTracker.getSelection().size();
+            menu.findItem(R.id.viewholderContextualActionBar_optionEdit).setVisible(size <= 1);
+            menu.findItem(R.id.viewHolderContextualActionBar_optionInfo).setVisible(size <= 1);
+            return true;
         }
 
         @SuppressLint("NonConstantResourceId")
@@ -142,13 +167,17 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
                 case R.id.viewholderContextualActionBar_optionEdit:
                     DialogFragment dialog = new NameRecordingDialogFragment();
                     dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
-                    mode.finish();
+
+                    // Note that actionMode.finish() is called in onNameRecordSave()
+
                     return true;
                 case R.id.viewholderContextualActionBar_optionDelete:
-                    // Delete all long-clicked selected items
-                    for (int position : adapter.getLongClickedPositions())
-                        viewModel.deleteRecord(adapter.getRecordAt(position));
-                    mode.finish();
+                    // Explain to the user that this action cannot be undone
+                    DialogFragment yesNoDialog = YesNoDialogFragment.newInstance(getString(R.string.playbackListFragment_warningDelete));
+                    yesNoDialog.show(getChildFragmentManager(), YesNoDialogFragment.TAG);
+
+                    // Either onNoClicked() or onYesClicked(). Note that actionMode.finish() is called in onYesClicked()
+
                     return true;
                 default: return false;
             }
@@ -156,6 +185,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
         @Override
         public void onDestroyActionMode(ActionMode mode) {
+            selectionTracker.clearSelection();
             actionMode = null;
         }
     };
@@ -163,8 +193,52 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     @Override
     public void onNameRecordSave(String name) {
         // Update the title of the AudioRecord at the selected position
-        int longClickedPosition = adapter.getLongClickedPositions().get(0);
-        AudioRecord record = adapter.getRecordAt(longClickedPosition);
+        long selectedId = selectionTracker.getSelection().iterator().next();
+        AudioRecord record = adapter.getRecordAt((int) selectedId);
+        record.title = name;
         viewModel.updateRecord(record);
+        actionMode.finish();
     }
+
+    @Override
+    public void onNoClicked() { /* No-op */ }
+
+    // YesNoDialog: if "Yes" is clicked, delete all selected records
+    @Override
+    public void onYesClicked() {
+        final List<AudioRecord> deletedList = new ArrayList<>();
+
+        for (long selectedId : selectionTracker.getSelection()) {
+            AudioRecord toDelete = adapter.getRecordAt((int) selectedId);
+            deletedList.add(toDelete);
+            viewModel.deleteRecord(toDelete);
+        }
+
+        if (selectionTracker.getSelection().size() == 1)            // One item selected
+            showSingleDeleteUndoSnackbar(deletedList.get(0));
+        else                                                        // Multiple items selected
+            showMultiDeleteUndoSnackbar(deletedList);
+
+        actionMode.finish();
+    }
+
+    private void showSingleDeleteUndoSnackbar(AudioRecord removed) {
+        Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
+                R.string.playbackListFragment_recordDelete, Snackbar.LENGTH_SHORT);
+        snackbar.setAction(R.string.playbackListFragment_undoDelete, (scopedView) -> viewModel.insertRecord(removed));
+        snackbar.show();
+    }
+
+    private void showMultiDeleteUndoSnackbar(List<AudioRecord> removed) {
+        Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
+                R.string.playbackListFragment_recordsDelete, Snackbar.LENGTH_SHORT);
+
+        snackbar.setAction(R.string.playbackListFragment_undoDelete, (scopedView) -> {
+            for (AudioRecord record : removed)
+                viewModel.insertRecord(record);
+        });
+
+        snackbar.show();
+    }
+
 }
