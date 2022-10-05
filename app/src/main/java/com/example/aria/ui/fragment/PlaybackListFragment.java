@@ -31,6 +31,7 @@ import com.example.aria.databinding.FragmentPlaybackListBinding;
 import com.example.aria.db.entity.AudioRecord;
 import com.example.aria.recyclerview.LongItemDetailsLookup;
 import com.example.aria.recyclerview.LongItemKeyProvider;
+import com.example.aria.ui.dialog.AudioRecordDetailsDialogFragment;
 import com.example.aria.ui.dialog.NameRecordingDialogFragment;
 import com.example.aria.ui.dialog.YesNoDialogFragment;
 import com.example.aria.viewmodel.AudioRecordListViewModel;
@@ -57,10 +58,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         super.onCreate(savedInstanceState);
         actionMode = null;
         viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
-
-        if (savedInstanceState != null) {
-            selectionTracker.onRestoreInstanceState(savedInstanceState);
-        }
     }
 
     @Nullable
@@ -113,6 +110,10 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         adapter.setSelectionTracker(selectionTracker);
 
         subscribeUi(viewModel.getRecords());
+
+        if (savedInstanceState != null) {
+            selectionTracker.onRestoreInstanceState(savedInstanceState);
+        }
     }
 
     @Override
@@ -125,6 +126,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     public void onDestroyView() {
         binding = null;
         adapter = null;
+        actionMode = null;
         super.onDestroyView();
     }
 
@@ -161,12 +163,18 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         public boolean onActionItemClicked(ActionMode mode, @NonNull MenuItem menuItem) {
             switch (menuItem.getItemId()) {
                 case R.id.viewHolderContextualActionBar_optionInfo:
-                    // TODO: Launch a "DetailsDialog"
+                    long selectedId = selectionTracker.getSelection().iterator().next();
+                    AudioRecord record = adapter.getRecordAt((int) selectedId);
+
+                    AudioRecordDetailsDialogFragment detailsDialog = AudioRecordDetailsDialogFragment.newInstance(record.recordId, record.title, record.duration, record.dateCreated);
+                    detailsDialog.show(getChildFragmentManager(), AudioRecordDetailsDialogFragment.TAG);
+
                     mode.finish();
                     return true;
                 case R.id.viewholderContextualActionBar_optionEdit:
-                    DialogFragment dialog = new NameRecordingDialogFragment();
-                    dialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
+
+                    DialogFragment nameDialog = NameRecordingDialogFragment.newInstance(getString(R.string.playbackListFragment_recordNamePlaceholder));
+                    nameDialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
 
                     // Note that actionMode.finish() is called in onNameRecordSave()
 
@@ -192,12 +200,20 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
     @Override
     public void onNameRecordSave(String name) {
+
         // Update the title of the AudioRecord at the selected position
         long selectedId = selectionTracker.getSelection().iterator().next();
         AudioRecord record = adapter.getRecordAt((int) selectedId);
         record.title = name;
         viewModel.updateRecord(record);
         actionMode.finish();
+
+        // Show a snackbar
+        String message = "Recording name changed to " + name + ".";
+        Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
+                message, Snackbar.LENGTH_LONG);
+        snackbar.setAction(R.string.common_actionSnackBar, (scopedView) -> snackbar.dismiss());
+        snackbar.show();
     }
 
     @Override
@@ -222,6 +238,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         actionMode.finish();
     }
 
+    // TODO: Make a Snackbar "Builder" class to simplify creation without action
     private void showSingleDeleteUndoSnackbar(AudioRecord removed) {
         Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
                 R.string.playbackListFragment_recordDelete, Snackbar.LENGTH_SHORT);
@@ -240,5 +257,4 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
         snackbar.show();
     }
-
 }

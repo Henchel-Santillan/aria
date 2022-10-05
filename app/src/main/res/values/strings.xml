@@ -52,13 +52,21 @@
     <string name="yesNoDialog_positive">Yes</string>
     <string name="yesNoDialog_negative">No</string>
 
+    <!-- Audio Record Details Fragment -->
+    <string name="audioRecordDetailsDialog_heading">Record Details</string>
+    <string name="audioRecordDetailsDialog_titleText">Title: %s</string>
+    <string name="audioRecordDetailsDialog_durationText">Duration: %s</string>
+    <string name="audioRecordDetailsDialog_recordIdText">Record ID: %d</string>
+    <string name="audioRecordDetailsDialog_dateCreatedText">Date Created: %s</string>
+
     <!-- Playback List Fragment -->
     <string name="playbackListFragment_recordDelete">Deleted recording</string>
     <string name="playbackListFragment_recordsDelete">Deleted recordings</string>
     <string name="playbackListFragment_warningDelete">Are you sure you want to delete the selected records?</string>
     <string name="playbackListFragment_undoDelete">Undo</string>
+    <string name="playbackListFragment_recordNamePlaceholder">Enter New Recording Name</string>
 
-    <!-- Playback List Fragment Layout -->
+    <!-- Playback List Fragment Contextual Action Bar -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
     <string name="viewholderContextualActionBar_editDescription">Rename this audio record</string>
     <string name="viewholderContextualActionBar_deleteTitle">Delete</string>
