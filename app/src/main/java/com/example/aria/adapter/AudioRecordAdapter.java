@@ -6,7 +6,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.os.LocaleListCompat;
 import androidx.recyclerview.selection.ItemDetailsLookup;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.widget.AsyncListDiffer;
@@ -17,8 +16,6 @@ import com.example.aria.R;
 import com.example.aria.db.entity.AudioRecord;
 import com.example.aria.recyclerview.LongItemDetail;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 public class AudioRecordAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -38,12 +35,7 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         public void bindTo(@NonNull AudioRecord record, boolean isSelected) {
             titleLabel.setText(record.title);
-
-            // Format the dateCreated first before using with setText
-            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", LocaleListCompat.getDefault().get(0));
-
-            String metaLabelText = record.duration + " | " + format.format(new Date(record.dateCreated));
-            metaLabel.setText(metaLabelText);
+            metaLabel.setText(record.duration);
 
             itemView.setSelected(isSelected);
         }
@@ -86,7 +78,7 @@ public class AudioRecordAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public long getItemId(int position) {
-        return (long) position;
+        return position;
     }
 
     public void submitList(List<AudioRecord> recordList) {
