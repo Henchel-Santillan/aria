@@ -1,6 +1,7 @@
 package com.example.aria;
 
 import android.Manifest;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -8,11 +9,15 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.view.MenuItem;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.DialogFragment;
@@ -33,21 +38,49 @@ public class PlaybackActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_playback);
 
+        // Add support for up navigation in this Activity
+        Toolbar toolbar = findViewById(R.id.playbackToolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null)
+            actionBar.setDisplayHomeAsUpEnabled(true);
+
         // Note that isServiceBound is always false in onCreate
         isServiceBound = false;
 
+        // Get the Intent information from the PlaybackListFragment
+        String filePath = "";
+        String amplitudePath = "";
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            filePath = extras.getString("filePath");
+            amplitudePath = extras.getString("amplitudePath");
+        }
+
+/*
         // Check READ_PHONE_STATE Permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
             Intent playerServiceIntent = new Intent(this, AudioRecordPlayerService.class);
+            playerServiceIntent.putExtra("filePath", filePath);
+            playerServiceIntent.putExtra("amplitudePath", amplitudePath);
             startService(playerServiceIntent);
             bindService(playerServiceIntent, connection, Context.BIND_AUTO_CREATE);
 
         } else {
             requestPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE);
+        }*/
+
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
         }
-
-
-
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -79,4 +112,5 @@ public class PlaybackActivity extends AppCompatActivity {
             dialog.show(getSupportFragmentManager(), PermissionContextDialogFragment.TAG);
         }
     });
+
 }

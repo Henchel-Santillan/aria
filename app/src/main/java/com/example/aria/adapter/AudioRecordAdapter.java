@@ -1,5 +1,7 @@
 package com.example.aria.adapter;
 
+import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,24 +22,46 @@ import java.util.List;
 
 public class AudioRecordAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    //**** Click Listener Interface ****//
+
+    public interface OnItemClickListener {
+        void onItemClick(View view, int position);
+    }
+
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     //**** ViewHolder *****//
 
-    public static class AudioRecordViewHolder extends RecyclerView.ViewHolder {
+    public class AudioRecordViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView titleLabel, metaLabel;
 
+        @SuppressLint("ClickableViewAccessibility")
         public AudioRecordViewHolder(View itemView) {
             super(itemView);
 
             titleLabel = itemView.findViewById(R.id.listItem_title);
             metaLabel = itemView.findViewById(R.id.listItem_meta);
+
+            itemView.setOnClickListener((scopedView) -> {
+                if (listener != null) {
+                    int position = getBindingAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION)
+                        listener.onItemClick(scopedView, position);
+                }
+            });
         }
 
         public void bindTo(@NonNull AudioRecord record, boolean isSelected) {
             titleLabel.setText(record.title);
             metaLabel.setText(record.duration);
 
-            itemView.setSelected(isSelected);
+            itemView.setActivated(isSelected);
+            itemView.setBackgroundColor((isSelected) ? Color.LTGRAY : Color.TRANSPARENT);
         }
 
         public ItemDetailsLookup.ItemDetails<Long> getItemDetails() {

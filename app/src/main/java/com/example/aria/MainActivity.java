@@ -57,18 +57,15 @@ public class MainActivity extends AppCompatActivity {
                 menuInflater.inflate(R.menu.menu_main, menu);
             }
 
-            // Keep switch-case in the event more menu items will be added
             @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-                switch (menuItem.getItemId()) {
-                    case R.id.recordMenu_optionSettings:
-                        // Start the Settings Activity
-                        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                        startActivity(intent);
-                        return true;
-                    default: return false;
+                if (menuItem.getItemId() == R.id.recordMenu_optionSettings) {// Start the Settings Activity
+                    Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                    startActivity(intent);
+                    return true;
                 }
+                return false;
             }
         });
     }

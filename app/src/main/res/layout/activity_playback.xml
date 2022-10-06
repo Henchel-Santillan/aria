@@ -7,7 +7,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    <com.google.android.material.chip.Chip
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/playbackToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!--<com.google.android.material.chip.Chip
         android:id="@+id/playbackFragment_speedChip"
         android:layout_width="60dp"
         android:layout_height="40dp"
@@ -17,63 +24,63 @@
 
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/playbackFragment_seekbar" />
-        
-    <SeekBar
-        android:id="@+id/playbackFragment_seekbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@id/playbackFragment_seekbar" />-->
 
-        app:layout_constraintBottom_toTopOf="@id/playbackFragment_layoutControls" />
-        
+        <SeekBar
+            android:id="@+id/playbackFragment_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+
+            app:layout_constraintBottom_toTopOf="@id/playbackFragment_layoutControls" />
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/playbackFragment_layoutControls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
 
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintStart_toStartOf="parent">
 
             <ImageButton
                 android:id="@+id/playbackFragment_backFive"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
 
-                android:src="@drawable/ic_baseline_replay_5_24"
+                android:layout_marginBottom="28dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
 
+                android:src="@drawable/ic_baseline_replay_5_24"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/playbackFragment_playPause"
-                android:layout_marginBottom="28dp" />
+                app:layout_constraintStart_toStartOf="parent" />
 
             <ImageButton
                 android:id="@+id/playbackFragment_playPause"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
 
-                android:src="@drawable/ic_baseline_pause_circle_filled_24"
+                android:layout_marginBottom="25dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
 
+                android:src="@drawable/ic_baseline_pause_circle_filled_24"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginBottom="25dp" />
-            
+                app:layout_constraintStart_toStartOf="parent" />
+
             <ImageButton
                 android:id="@+id/playbackFragment_skipFive"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
 
-                android:src="@drawable/ic_baseline_forward_5_24"
+                android:layout_marginBottom="28dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
 
+                android:src="@drawable/ic_baseline_forward_5_24"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@id/playbackFragment_playPause"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginBottom="28dp" />
+                app:layout_constraintStart_toEndOf="@id/playbackFragment_playPause" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

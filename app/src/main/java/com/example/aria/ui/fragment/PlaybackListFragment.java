@@ -1,12 +1,14 @@
 package com.example.aria.ui.fragment;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -25,6 +27,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.aria.PlaybackActivity;
 import com.example.aria.R;
 import com.example.aria.adapter.AudioRecordAdapter;
 import com.example.aria.databinding.FragmentPlaybackListBinding;
@@ -49,6 +52,8 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     private ActionMode actionMode;
     private SelectionTracker<Long> selectionTracker;
 
+    private boolean ignoreClick;
+
     public PlaybackListFragment() {
         super(R.layout.fragment_playback_list);
     }
@@ -57,6 +62,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         actionMode = null;
+        ignoreClick = false;
         viewModel = new ViewModelProvider(requireActivity()).get(AudioRecordListViewModel.class);
     }
 
@@ -76,6 +82,24 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         recordRecyclerView.setItemAnimator(new DefaultItemAnimator());
         recordRecyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL));
 
+        // Add Item Touch Listener to the RecyclerView to ignore clicks when the ActionMode is active
+        recordRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                if (e.getAction() != MotionEvent.ACTION_UP)
+                    return false;
+                if (actionMode != null)
+                    ignoreClick = rv.findChildViewUnder(e.getX(), e.getY()) != null;
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+        });
+
         // Create RecyclerView SelectionTracker to better facilitate click and long click actions
         selectionTracker = new SelectionTracker.Builder<>(
                 "audio_tracker",
@@ -84,7 +108,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
                 new LongItemDetailsLookup(recordRecyclerView),
                 StorageStrategy.createLongStorage())
                 .withSelectionPredicate(SelectionPredicates.createSelectAnything())
-                .withOnItemActivatedListener((item, e) -> true)
                 .build();
 
         selectionTracker.addObserver(new SelectionTracker.SelectionObserver<Long>() {
@@ -96,7 +119,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
                     if (actionMode == null)
                         actionMode = requireActivity().startActionMode(actionModeCallback);
 
-                    // TODO: Should only count unselected items that become selected
                     actionMode.setTitle(selected + " selected");
                     actionMode.invalidate();
 
@@ -108,6 +130,22 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
          });
 
         adapter.setSelectionTracker(selectionTracker);
+
+        // Add OnItemClickListener to the adapter
+        adapter.setOnItemClickListener((scopedView, position) -> {
+            if (ignoreClick)
+                ignoreClick = false;
+            else if (!selectionTracker.hasSelection()) {
+                // Get the AudioRecord associated with the position
+                AudioRecord record = adapter.getRecordAt(position);
+
+                // Start the PlaybackActivity using an Intent, passing over the paths to the audio and amplitude files
+                Intent intent = new Intent(requireActivity(), PlaybackActivity.class);
+                intent.putExtra("filePath", record.filePath);
+                intent.putExtra("amplitudePath", record.amplitudePath);
+                requireActivity().startActivity(intent);
+            }
+        });
 
         subscribeUi(viewModel.getRecords());
 
@@ -123,10 +161,16 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        clearSelection();
+    }
+
+    @Override
     public void onDestroyView() {
         binding = null;
         adapter = null;
-        actionMode = null;
+        clearSelection();
         super.onDestroyView();
     }
 
@@ -208,6 +252,8 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         viewModel.updateRecord(record);
         actionMode.finish();
 
+        // TODO: Compare with names of existing records to prevent a same name save
+
         // Show a snackbar
         String message = "Recording name changed to " + name + ".";
         Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
@@ -257,4 +303,14 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
         snackbar.show();
     }
+
+    private void clearSelection() {
+        // If the CAB is still showing or is visible, clear the RecyclerView selection and call finish().
+        if (actionMode != null) {
+            selectionTracker.clearSelection();
+            actionMode.finish();
+            actionMode = null;
+        }
+    }
+
 }

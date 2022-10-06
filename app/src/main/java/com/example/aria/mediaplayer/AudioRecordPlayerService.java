@@ -61,6 +61,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
     private MediaPlayer mediaPlayer;
     private String pathToAudioFile;         // TODO: Init (via Bundle? or ViewModel)
+    private String pathToAmplitudeFile;
 
     private IBinder binder;
     private int savedResumePosition;
@@ -91,6 +92,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         super.onCreate();
         binder = new AudioRecordPlayerBinder();
         pathToAudioFile = "";
+        pathToAmplitudeFile = "";
         savedResumePosition = 0;
         resumeOnFocusGain = false;
         playbackDelayed = false;
@@ -98,7 +100,11 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(@NonNull Intent intent, int flags, int startId) {
+        // Fetch the intent from the Activity
+        pathToAudioFile = intent.getStringExtra("filePath");
+        pathToAmplitudeFile = intent.getStringExtra("amplitudePath");
+
         // Only need to create NotificationChannel on API 26+ devices
         createNotificationChannel();
 
@@ -390,6 +396,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
             default: break;
         }
     }
+
 
     //*** Notifications ***//
 
