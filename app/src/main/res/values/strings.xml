@@ -64,7 +64,8 @@
     <string name="playbackListFragment_recordsDelete">Deleted recordings</string>
     <string name="playbackListFragment_warningDelete">Are you sure you want to delete the selected records?</string>
     <string name="playbackListFragment_undoDelete">Undo</string>
-    <string name="playbackListFragment_recordNamePlaceholder">Enter New Recording Name</string>
+    <string name="playbackListFragment_recordNamePlaceholder">New Recording</string>
+    <string name="playbackListFragment_warningNameOverwrite">Do you want to overwrite an existing record with the same name?</string>
 
     <!-- Playback List Fragment Contextual Action Bar -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>

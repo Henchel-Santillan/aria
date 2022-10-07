@@ -141,6 +141,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
                 // Start the PlaybackActivity using an Intent, passing over the paths to the audio and amplitude files
                 Intent intent = new Intent(requireActivity(), PlaybackActivity.class);
+                intent.putExtra("title", record.title);
                 intent.putExtra("filePath", record.filePath);
                 intent.putExtra("amplitudePath", record.amplitudePath);
                 requireActivity().startActivity(intent);
@@ -186,7 +187,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     }
 
     //**** Callback for the Contextual Action Bar ****//
-    ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
+    private final ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
         @Override
         public boolean onCreateActionMode(@NonNull ActionMode mode, Menu menu) {
             MenuInflater inflater = mode.getMenuInflater();
@@ -216,7 +217,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
                     mode.finish();
                     return true;
                 case R.id.viewholderContextualActionBar_optionEdit:
-
                     DialogFragment nameDialog = NameRecordingDialogFragment.newInstance(getString(R.string.playbackListFragment_recordNamePlaceholder));
                     nameDialog.show(getChildFragmentManager(), NameRecordingDialogFragment.TAG);
 

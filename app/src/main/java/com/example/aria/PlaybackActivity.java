@@ -50,19 +50,21 @@ public class PlaybackActivity extends AppCompatActivity {
         isServiceBound = false;
 
         // Get the Intent information from the PlaybackListFragment
+        String title = "";
         String filePath = "";
         String amplitudePath = "";
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
+            title = extras.getString("title");
             filePath = extras.getString("filePath");
             amplitudePath = extras.getString("amplitudePath");
         }
 
-/*
         // Check READ_PHONE_STATE Permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
             Intent playerServiceIntent = new Intent(this, AudioRecordPlayerService.class);
+            playerServiceIntent.putExtra("title", title);
             playerServiceIntent.putExtra("filePath", filePath);
             playerServiceIntent.putExtra("amplitudePath", amplitudePath);
             startService(playerServiceIntent);
@@ -70,8 +72,7 @@ public class PlaybackActivity extends AppCompatActivity {
 
         } else {
             requestPermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE);
-        }*/
-
+        }
     }
 
     @Override

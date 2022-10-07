@@ -18,12 +18,12 @@ import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.telephony.TelephonyCallback;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -32,20 +32,21 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.example.aria.R;
-import com.example.aria.db.entity.AudioRecord;
 
 import java.io.IOException;
 
-public class AudioRecordPlayerService extends Service implements MediaPlayer.OnBufferingUpdateListener,
+public class AudioRecordPlayerService extends Service implements
         MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, MediaPlayer.OnInfoListener,
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, AudioManager.OnAudioFocusChangeListener {
+        MediaPlayer.OnPreparedListener, AudioManager.OnAudioFocusChangeListener {
 
     // Custom Binder class that returns the current AudioRecordPlayerService instance, which has public methods that the client can call
+
     public class AudioRecordPlayerBinder extends Binder {
         public AudioRecordPlayerService getService() {
             return AudioRecordPlayerService.this;
         }
     }
+
 
     public enum PlaybackState { RESUMED_PLAYING, PAUSED }
 
@@ -60,29 +61,34 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     private static final String NOTIF_ACTION_PREV_FIVE = "com.example.aria.mediaplayer.NOTIF_ACTION_PREV_FIVE";
 
     private MediaPlayer mediaPlayer;
-    private String pathToAudioFile;         // TODO: Init (via Bundle? or ViewModel)
-    private String pathToAmplitudeFile;
+    private String title, pathToAudioFile, pathToAmplitudeFile;
 
     private IBinder binder;
     private int savedResumePosition;
 
-    //*** Media Session ***//
+
+    // Media Session
 
     private MediaSession mediaSession;
     private MediaSessionManager mediaSessionManager;
     private MediaController.TransportControls transportControls;
 
-    //*** Audio Management ***//
+
+    // Audio Management
 
     private AudioManager audioManager;
     private AudioAttributes audioAttributes;
     private AudioFocusRequest audioFocusRequest;
-    private AudioRecord record;         // TODO: Initialize
 
     private final Object focusLock = new Object();
     private boolean resumeOnFocusGain;
     private boolean playbackDelayed;
 
+
+    // Incoming Phone Call
+    private TelephonyManager telephonyManager;
+    private TelephonyCallback.CallStateListener telephonyCallback;
+    private boolean isCallOngoing;
 
 
     //*** Service Lifecycle Methods ***/
@@ -96,17 +102,24 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         savedResumePosition = 0;
         resumeOnFocusGain = false;
         playbackDelayed = false;
-        // registerCallStateListener(); --> manage incoming phone calls during playback
+        isCallOngoing = false;
+
+        // Manage incoming phone calls during playback
+        registerCallStateListener();
     }
 
     @Override
     public int onStartCommand(@NonNull Intent intent, int flags, int startId) {
         // Fetch the intent from the Activity
+        title = intent.getStringExtra("title");
         pathToAudioFile = intent.getStringExtra("filePath");
         pathToAmplitudeFile = intent.getStringExtra("amplitudePath");
 
         // Only need to create NotificationChannel on API 26+ devices
         createNotificationChannel();
+
+        if (!requestAudioFocus())
+            stopSelf();
 
         if (mediaSessionManager == null) {
             try {
@@ -118,6 +131,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
             createNotification(PlaybackState.RESUMED_PLAYING);
         }
 
+        handleNotificationPlaybackActions(intent);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -128,6 +142,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
     @Override
     public boolean onUnbind(Intent intent) {
+        mediaSession.release();
         destroyNotification();
         return super.onUnbind(intent);
     }
@@ -145,26 +160,22 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     //*** MediaPlayer Methods ***/
 
     private void initMediaPlayer() {
-        if (mediaPlayer == null)
-            mediaPlayer = new MediaPlayer();
+        mediaPlayer = new MediaPlayer();
 
         // Configure the listeners
-        mediaPlayer.setOnBufferingUpdateListener(this);
         mediaPlayer.setOnCompletionListener(this);
         mediaPlayer.setOnErrorListener(this);
         mediaPlayer.setOnInfoListener(this);
         mediaPlayer.setOnPreparedListener(this);
-        mediaPlayer.setOnSeekCompleteListener(this);
 
         // Guarantees that CPU continues running while MediaPlayer is playing
         mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-
         mediaPlayer.reset();
 
         // Set the data source of the MediaPlayer to the String representing the AudioRecord's URI
         try {
-            mediaPlayer.setDataSource("");
-        } catch (IOException e) {
+            mediaPlayer.setDataSource(pathToAudioFile);
+        } catch (IOException ioe) {
             stopSelf();
         }
 
@@ -195,24 +206,8 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         }
     }
 
-    private void skipFiveForward() {
-        pause();
-        mediaPlayer.seekTo(Math.min(savedResumePosition + 5, mediaPlayer.getDuration()));
-        play();
-    }
-
-    private void skipFiveBackward() {
-        pause();
-        mediaPlayer.seekTo(savedResumePosition - 5);
-    }
-
 
     //*** MediaPlayer Listeners ***//
-
-    @Override
-    public void onBufferingUpdate(MediaPlayer mediaPlayer, int i) {
-
-    }
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
@@ -263,11 +258,6 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         play();
     }
 
-    @Override
-    public void onSeekComplete(MediaPlayer mediaPlayer) {
-        // No-op
-    }
-
 
     //*** MediaSession ***//
 
@@ -282,7 +272,10 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
             mediaSession.setActive(true);
 
             // Set the media session's metadata
-            updateSessionMetaData();
+            mediaSession.setMetadata(new MediaMetadata.Builder()
+                    .putString(MediaMetadata.METADATA_KEY_TITLE, title)
+                    .build()
+            );
 
             mediaSession.setCallback(new MediaSession.Callback() {
                 @Override
@@ -308,17 +301,12 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
 
                 @Override
                 public void onSeekTo(long position) {
+                    pause();
                     super.onSeekTo(position);
+                    resume();
                 }
             });
         }
-    }
-
-    private void updateSessionMetaData() {
-        mediaSession.setMetadata(new MediaMetadata.Builder()
-                .putString(MediaMetadata.METADATA_KEY_TITLE, record.title)
-                .build()
-        );
     }
 
 
@@ -359,7 +347,6 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     @Override
     public void onAudioFocusChange(int focusChange) {
         switch (focusChange) {
-
             case AudioManager.AUDIOFOCUS_GAIN:
                 // Resume playback; app has been granted audio focus gain
                 if (playbackDelayed || resumeOnFocusGain) {
@@ -418,7 +405,7 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                         .setMediaSession(MediaSessionCompat.Token.fromToken(mediaSession.getSessionToken()))
                         .setShowActionsInCompactView(0, 1, 2))
-                .setContentTitle(record.title)
+                .setContentTitle(title)
                 .addAction(R.drawable.ic_baseline_replay_5_24, getString(R.string.audioRecordPlayerService_notificationActionPrevFive), getNotificationAction(2))
                 .addAction(playPauseNotifDrawableId, getString(R.string.audioRecordPlayerService_notificationActionPause), getNotificationAction(playPauseActionId))
                 .addAction(R.drawable.ic_baseline_forward_5_24, getString(R.string.audioRecordPlayerService_notificationActionNextFive), getNotificationAction(3));
@@ -431,7 +418,6 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
     private void destroyNotification() {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         manager.cancel(NOTIFICATION_ID);
-
     }
 
     @Nullable
@@ -456,6 +442,29 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
         return PendingIntent.getService(this, actionId, intent, PendingIntent.FLAG_IMMUTABLE);
     }
 
+    private void handleNotificationPlaybackActions(Intent notificationPlaybackAction) {
+        if (notificationPlaybackAction != null && notificationPlaybackAction.getAction() != null) {
+            switch (notificationPlaybackAction.getAction()) {
+                case NOTIF_ACTION_PLAY:
+                    transportControls.play();
+                    break;
+                case NOTIF_ACTION_PAUSE:
+                    transportControls.pause();
+                    break;
+                case NOTIF_ACTION_NEXT_FIVE:
+                    transportControls.seekTo(Math.min(savedResumePosition + 5, mediaPlayer.getDuration()));
+                    break;
+                case NOTIF_ACTION_PREV_FIVE:
+                    transportControls.seekTo(Math.min(0, savedResumePosition - 5));
+                    break;
+                case NOTIF_ACTION_STOP:
+                    transportControls.stop();
+                    break;
+                default: break;
+            }
+        }
+    }
+
     @SuppressLint("ObsoleteSdkInt")
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -472,6 +481,36 @@ public class AudioRecordPlayerService extends Service implements MediaPlayer.OnB
             NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             manager.createNotificationChannel(channel);
         }
+    }
+
+
+    //*** Incoming Call Management ***//
+
+    public class TelephoneStateCallback extends TelephonyCallback implements TelephonyCallback.CallStateListener {
+        @Override
+        public void onCallStateChanged(int state) {
+            switch (state) {
+                case TelephonyManager.CALL_STATE_OFFHOOK:
+                case TelephonyManager.CALL_STATE_RINGING:
+                    if (mediaPlayer != null) {
+                        pause();
+                        isCallOngoing = true;
+                    }
+                    break;
+                case TelephonyManager.CALL_STATE_IDLE:
+                    if (mediaPlayer != null && isCallOngoing) {
+                        isCallOngoing = false;
+                        resume();
+                    }
+                    break;
+                default: break;
+            }
+        }
+    }
+
+    private void registerCallStateListener() {
+        telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        telephonyManager.registerTelephonyCallback((runnable) -> new Thread(runnable).start(), new TelephoneStateCallback());
     }
 
 }
