@@ -19,6 +19,5 @@
             android:layout_height="wrap_content"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-
     </LinearLayout>
 </layout>

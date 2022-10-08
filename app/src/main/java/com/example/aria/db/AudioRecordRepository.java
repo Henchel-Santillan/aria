@@ -41,8 +41,8 @@ public class AudioRecordRepository {
         return observableRecords;
     }
 
-    public LiveData<AudioRecord> getRecord(final int recordId) {
-        return database.recordDao().getRecord(recordId);
+    public LiveData<List<AudioRecord>> getRecordsByTitle(String titleQuery) {
+        return database.recordDao().getRecordsByTitle(titleQuery);
     }
 
     public void updateRecord(final AudioRecord record) {

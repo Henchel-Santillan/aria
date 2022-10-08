@@ -14,9 +14,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.selection.SelectionPredicates;
@@ -43,7 +47,8 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PlaybackListFragment extends Fragment implements NameRecordingDialogFragment.NameRecordingDialogFragmentListener, YesNoDialogFragment.YesNoDialogFragmentListener {
+public class PlaybackListFragment extends Fragment implements NameRecordingDialogFragment.NameRecordingDialogFragmentListener,
+        YesNoDialogFragment.YesNoDialogFragmentListener {
 
     private AudioRecordAdapter adapter;
     private AudioRecordListViewModel viewModel;
@@ -75,12 +80,49 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        // Search Functionality
+        MenuHost host = requireActivity();
+        host.addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_fragment_playback_list, menu);
+
+                MenuItem searchItem = menu.findItem(R.id.playbackListMenu_optionSearch);
+                SearchView searchView = (SearchView) searchItem.getActionView();
+                searchView.setSubmitButtonEnabled(false);
+                searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        if (query != null && !query.isEmpty())
+                            subscribeSearch(query);
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String query) {
+                        if (query != null && !query.isEmpty())
+                            subscribeSearch(query);
+                        return true;
+                    }
+                });
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                return true;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+
+
+        // RecyclerView
         RecyclerView recordRecyclerView = binding.playbackListFragmentRecordRecyclerView;
         adapter = new AudioRecordAdapter();
         recordRecyclerView.setAdapter(adapter);
 
         recordRecyclerView.setItemAnimator(new DefaultItemAnimator());
         recordRecyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), LinearLayoutManager.VERTICAL));
+
+        subscribeUi(viewModel.getRecords());
 
         // Add Item Touch Listener to the RecyclerView to ignore clicks when the ActionMode is active
         recordRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
@@ -148,12 +190,11 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
             }
         });
 
-        subscribeUi(viewModel.getRecords());
-
         if (savedInstanceState != null) {
             selectionTracker.onRestoreInstanceState(savedInstanceState);
         }
     }
+
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
@@ -175,8 +216,22 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         super.onDestroyView();
     }
 
+
+    //*** ViewModel ***//
+
     private void subscribeUi(@NonNull LiveData<List<AudioRecord>> liveData) {
         liveData.observe(getViewLifecycleOwner(), audioRecords -> {
+            if (audioRecords != null) {
+                binding.setIsLoading(false);
+                adapter.submitList(audioRecords);
+            } else binding.setIsLoading(true);
+
+            binding.executePendingBindings();
+        });
+    }
+
+    private void subscribeSearch(String query) {
+        viewModel.getRecordsByTitle(query).observe(getViewLifecycleOwner(), audioRecords -> {
             if (audioRecords != null) {
                 binding.setIsLoading(false);
                 adapter.submitList(audioRecords);
@@ -244,15 +299,12 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
     @Override
     public void onNameRecordSave(String name) {
-
         // Update the title of the AudioRecord at the selected position
         long selectedId = selectionTracker.getSelection().iterator().next();
         AudioRecord record = adapter.getRecordAt((int) selectedId);
+
         record.title = name;
         viewModel.updateRecord(record);
-        actionMode.finish();
-
-        // TODO: Compare with names of existing records to prevent a same name save
 
         // Show a snackbar
         String message = "Recording name changed to " + name + ".";
@@ -260,6 +312,8 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
                 message, Snackbar.LENGTH_LONG);
         snackbar.setAction(R.string.common_actionSnackBar, (scopedView) -> snackbar.dismiss());
         snackbar.show();
+
+        actionMode.finish();
     }
 
     @Override

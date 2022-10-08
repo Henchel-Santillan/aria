@@ -66,6 +66,10 @@
     <string name="playbackListFragment_undoDelete">Undo</string>
     <string name="playbackListFragment_recordNamePlaceholder">New Recording</string>
     <string name="playbackListFragment_warningNameOverwrite">Do you want to overwrite an existing record with the same name?</string>
+    <string name="playbackListFragment_searchTextHint">Search record by name</string>
+
+    <!-- Playback List Menu -->
+    <string name="playbackListMenu_optionSearchTitle">Search</string>
 
     <!-- Playback List Fragment Contextual Action Bar -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
