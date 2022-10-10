@@ -1,9 +1,11 @@
 package com.example.aria.ui.fragment;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +31,7 @@ import com.example.aria.ui.dialog.PermissionContextDialogFragment;
 import com.example.aria.viewmodel.AudioRecordListViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -49,8 +52,7 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     private AudioRecordListViewModel viewModel;
 
     // Important attributes and containers to generate an Audio Record
-    private String absolutePathEcd;
-    private String fileName;
+    private String fileName, recordingPath;
     private String recordingDuration;
     private List<Float> amplitudes;
 
@@ -64,8 +66,8 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
         isRecorderActive = false;
         isPaused = false;
-        absolutePathEcd = "";
         fileName = "";
+        recordingPath = "";
         recordingDuration = "";
         amplitudes = new ArrayList<>();
 
@@ -153,28 +155,35 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         stopRecording();
         hideCancelSaveFabs();
 
-        String filePath = absolutePathEcd + name;
-        String amplitudesPath = filePath.substring(0, filePath.length() - 4);   // .mp4 is 4 characters
-
         final String dialogText = "Recording " + name + " was saved.";
         showCloseableSnackbar(binding.fabSave, dialogText, true);
-
-        Snackbar snackbar = Snackbar.make(binding.fabSave, dialogText, Snackbar.LENGTH_LONG);
-        snackbar.setAction(R.string.common_actionSnackBar, (view) -> snackbar.dismiss());
-        snackbar.show();
 
         // Reset the timer
         binding.countDownTimer.setText(getString(R.string.recordFragment_timerStartText));
 
+        String filePath = recordingPath + name;
+        boolean canWriteToExternalStorage = isExternalStorageWritable();
+
+        // Compare the previous fileName to the name set by the user in the NameRecordingDialogFragment
+        // If they are the same, no action is required; otherwise, the innermost file in the path must be renamed
+        if (!fileName.equals(name) && canWriteToExternalStorage) {
+            File file = new File(filePath);
+            boolean renamed = new File(recordingPath + fileName).renameTo(file);
+            Log.d(LOG_TAG, "Recording name specified by user replaces auto-generated name: " + renamed);
+        }
+
+        String amplitudesPath = filePath.substring(0, filePath.length() - 4);   // .mp4 is 4 characters
+
         // Save the waveform generated during recording to a File specified by the "amplitudesPath" path
-        try (FileOutputStream fos = new FileOutputStream(amplitudesPath);
-             ObjectOutputStream out = new ObjectOutputStream(fos)) {
+        if (canWriteToExternalStorage) {
+            try (FileOutputStream fos = new FileOutputStream(amplitudesPath);
+                 ObjectOutputStream out = new ObjectOutputStream(fos)) {
 
-            out.writeObject(amplitudes);
+                out.writeObject(amplitudes);
 
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "onNameRecordSave: IOException with either FileOutputStream or ObjectOutputStream", e);
-            // TODO: Should show some sort of UI element
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "onNameRecordSave: FileOutputStream or ObjectOutputStream failed", e);
+            }
         }
 
         // Construct the saved AudioRecord with the given name and metadata
@@ -193,19 +202,24 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
     //*** MediaRecorder ***//
 
     private void startRecording() {
-        recorder = new MediaRecorder();
+        recorder = new MediaRecorder(requireContext());
         recorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
-        absolutePathEcd = requireContext().getExternalCacheDir().getAbsolutePath() + "/";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", LocaleListCompat.getDefault().get(0));
         fileName = dateFormat.format(new Date()) + "_recording";
-        recorder.setOutputFile(absolutePathEcd + fileName);
+
+        // Attempt to obtain the file path to the system recordings
+        File recordingDir = getAppSpecificRecordingsStorageDir(requireContext(), "");
+        if (recordingDir != null)
+            recordingPath = recordingDir.getAbsolutePath() + "/";
+        recorder.setOutputFile(recordingPath + fileName);
 
         try {
             recorder.prepare();
-        } catch (IOException exception) {
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Recorder failed on prepare()", e);
             isRecorderActive = false;
         }
 
@@ -219,10 +233,9 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
     private void stopRecording() {
         recorder.stop();
-        recorder.reset();
         recorder.release();
-
         recorder = null;
+
         isPaused = false;
         isRecorderActive = false;
         binding.fabRecord.setImageResource(R.drawable.ic_baseline_mic_24);
@@ -256,6 +269,22 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         binding.countDownTimer.setText(duration);
         recordingDuration = duration;
         binding.amplitudeView.addAmplitude((float) recorder.getMaxAmplitude());
+    }
+
+
+    //*** External Storage ***//
+
+    private boolean isExternalStorageWritable() {
+        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
+    }
+
+    @Nullable
+    private File getAppSpecificRecordingsStorageDir(@NonNull Context context, String dirName) {
+        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS), dirName);
+        if (file == null || !file.mkdirs()) {
+            Log.e(LOG_TAG, "Directory not created");
+        }
+        return file;
     }
 
 }
