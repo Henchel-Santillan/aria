@@ -51,4 +51,5 @@ public class YesNoDialogFragment extends DialogFragment {
     }
 
     public static String TAG = "YesNoDialogFragment";
+
 }

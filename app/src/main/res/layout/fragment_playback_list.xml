@@ -17,8 +17,7 @@
             android:id="@+id/playbackListFragment_recordRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
+            app:layoutManager="com.example.aria.recyclerview.NPALinearLayoutManager" />
 
     </LinearLayout>
 </layout>

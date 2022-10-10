@@ -64,7 +64,12 @@
     <string name="playbackListFragment_recordsDelete">Deleted recordings</string>
     <string name="playbackListFragment_warningDelete">Are you sure you want to delete the selected records?</string>
     <string name="playbackListFragment_undoDelete">Undo</string>
-    <string name="playbackListFragment_recordNamePlaceholder">Enter New Recording Name</string>
+    <string name="playbackListFragment_recordNamePlaceholder">New Recording</string>
+    <string name="playbackListFragment_warningNameOverwrite">Do you want to overwrite an existing record with the same name?</string>
+    <string name="playbackListFragment_searchTextHint">Search record by name</string>
+
+    <!-- Playback List Menu -->
+    <string name="playbackListMenu_optionSearchTitle">Search</string>
 
     <!-- Playback List Fragment Contextual Action Bar -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
@@ -77,21 +82,14 @@
     <!-- Playback List Fragment RecyclerView ViewHolder Layout -->
     <string name="playbackListViewHolder_imageDescription">Play Audio</string>
 
-    <!-- Playback Fragment -->
+    <!-- Playback Activity -->
+    <string name="playbackActivity_notificationName">Audio Record Playback</string>
+    <string name="playbackActivity_notificationDescription">Audio Record Playback Controls</string>
 
     <!-- Settings Fragment -->
     <string name="settingsFragment_removeTitle">Recently removed</string>
     <string name="settingsFragment_removeSummary">Send deleted recordings to "Recently removed"</string>
     <string name="settingsFragment_feedbackTitle">Feedback</string>
     <string name="settingsFragment_feedbackSummary">Report technical issues or suggest new features</string>
-
-
-    <!-- Audio Record Player Service -->
-    <string name="audioRecordPlayerService_notificationName">Audio Record Playback</string>
-    <string name="audioRecordPlayerService_notificationDescription">Audio Record Playback Controls</string>
-    <string name="audioRecordPlayerService_notificationActionPlay">Play</string>
-    <string name="audioRecordPlayerService_notificationActionPause">Pause</string>
-    <string name="audioRecordPlayerService_notificationActionNextFive">Forward Five</string>
-    <string name="audioRecordPlayerService_notificationActionPrevFive">Replay Five</string>
 
 </resources>

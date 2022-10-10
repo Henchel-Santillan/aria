@@ -18,8 +18,8 @@ public interface AudioRecordDao {
     @Query("SELECT * FROM audioRecords")
     LiveData<List<AudioRecord>> getRecords();
 
-    @Query("SELECT * FROM audioRecords where recordId = :id")
-    LiveData<AudioRecord> getRecord(int id);
+    @Query("SELECT * FROM audioRecords WHERE title LIKE :titleQuery")
+    LiveData<List<AudioRecord>> getRecordsByTitle(String titleQuery);
 
     @Update
     void updateRecord(AudioRecord record);

@@ -17,15 +17,11 @@ import java.util.List;
 
 public class AudioRecordListViewModel extends AndroidViewModel {
 
-    private static final String QUERY_KEY = "QUERY";
-
-    private final SavedStateHandle savedStateHandle;
     private final AudioRecordRepository repository;
     private final LiveData<List<AudioRecord>> records;
 
     public AudioRecordListViewModel(@NonNull Application application, @NonNull SavedStateHandle savedStateHandle) {
         super(application);
-        this.savedStateHandle = savedStateHandle;
 
         repository = ((AriaApplication) application).getRepository();
 
@@ -34,17 +30,12 @@ public class AudioRecordListViewModel extends AndroidViewModel {
                 (Function<CharSequence, LiveData<List<AudioRecord>>>) query -> repository.getRecords());
     }
 
-    // At the moment, not necessarily useful
-    public void setQuery(CharSequence query) {
-        savedStateHandle.set(QUERY_KEY, query);
-    }
-
     public LiveData<List<AudioRecord>> getRecords() {
         return records;
     }
 
-    public LiveData<AudioRecord> getRecord(final int recordId) {
-        return repository.getRecord(recordId);
+    public LiveData<List<AudioRecord>> getRecordsByTitle(String titleQuery) {
+        return repository.getRecordsByTitle(titleQuery);
     }
 
     public void updateRecord(AudioRecord record) {
