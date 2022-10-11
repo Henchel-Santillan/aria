@@ -68,9 +68,6 @@
     <string name="playbackListFragment_warningNameOverwrite">Do you want to overwrite an existing record with the same name?</string>
     <string name="playbackListFragment_searchTextHint">Search record by name</string>
 
-    <!-- Playback List Menu -->
-    <string name="playbackListMenu_optionSearchTitle">Search</string>
-
     <!-- Playback List Fragment Contextual Action Bar -->
     <string name="viewholderContextualActionBar_editTitle">Rename</string>
     <string name="viewholderContextualActionBar_editDescription">Rename this audio record</string>
@@ -83,8 +80,8 @@
     <string name="playbackListViewHolder_imageDescription">Play Audio</string>
 
     <!-- Playback Activity -->
-    <string name="playbackActivity_notificationName">Audio Record Playback</string>
-    <string name="playbackActivity_notificationDescription">Audio Record Playback Controls</string>
+    <string name="playbackActivity_durationPlaceholder">--:--</string>
+
 
     <!-- Settings Fragment -->
     <string name="settingsFragment_removeTitle">Recently removed</string>

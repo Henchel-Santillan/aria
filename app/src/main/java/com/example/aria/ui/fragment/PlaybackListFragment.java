@@ -14,13 +14,9 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.SearchView;
-import androidx.core.view.MenuHost;
-import androidx.core.view.MenuProvider;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.selection.SelectionPredicates;
@@ -80,41 +76,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        // Search Functionality
-        MenuHost host = requireActivity();
-        host.addMenuProvider(new MenuProvider() {
-            @Override
-            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                menuInflater.inflate(R.menu.menu_fragment_playback_list, menu);
-
-                MenuItem searchItem = menu.findItem(R.id.playbackListMenu_optionSearch);
-                SearchView searchView = (SearchView) searchItem.getActionView();
-                searchView.setSubmitButtonEnabled(false);
-                searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                    @Override
-                    public boolean onQueryTextSubmit(String query) {
-                        if (query != null && !query.isEmpty())
-                            subscribeSearch(query);
-                        return true;
-                    }
-
-                    @Override
-                    public boolean onQueryTextChange(String query) {
-                        if (query != null && !query.isEmpty())
-                            subscribeSearch(query);
-                        return true;
-                    }
-                });
-            }
-
-            @Override
-            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
-                return true;
-            }
-        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
-
-
-        // RecyclerView
         RecyclerView recordRecyclerView = binding.playbackListFragmentRecordRecyclerView;
         adapter = new AudioRecordAdapter();
         recordRecyclerView.setAdapter(adapter);
@@ -221,17 +182,6 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
 
     private void subscribeUi(@NonNull LiveData<List<AudioRecord>> liveData) {
         liveData.observe(getViewLifecycleOwner(), audioRecords -> {
-            if (audioRecords != null) {
-                binding.setIsLoading(false);
-                adapter.submitList(audioRecords);
-            } else binding.setIsLoading(true);
-
-            binding.executePendingBindings();
-        });
-    }
-
-    private void subscribeSearch(String query) {
-        viewModel.getRecordsByTitle(query).observe(getViewLifecycleOwner(), audioRecords -> {
             if (audioRecords != null) {
                 binding.setIsLoading(false);
                 adapter.submitList(audioRecords);

@@ -13,32 +13,38 @@
             android:layout_height="wrap_content"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <!--<com.google.android.material.chip.Chip
-        android:id="@+id/playbackFragment_speedChip"
-        android:layout_width="60dp"
-        android:layout_height="40dp"
-        android:textAlignment="center"
-        android:textSize="14sp"
-        android:layout_marginBottom="20dp"
-
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/playbackFragment_seekbar" />-->
-
-        <SeekBar
-            android:id="@+id/playbackFragment_seekbar"
+        
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:layout_marginBottom="20dp"
+            app:layout_constraintBottom_toTopOf="@id/playbackFragment_layoutControls">
 
-            app:layout_constraintBottom_toTopOf="@id/playbackFragment_layoutControls" />
+            <SeekBar
+                android:id="@+id/playbackFragment_seekbar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/playbackFragment_durationLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:layout_marginStart="10dp"
+                android:text="@string/playbackActivity_durationPlaceholder"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:textSize="18sp" />
+
+        </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/playbackFragment_layoutControls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
+            android:layout_marginBottom="40dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -51,20 +57,18 @@
                 android:layout_marginBottom="28dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
 
-                android:src="@drawable/ic_baseline_replay_5_24"
+                android:src="@drawable/ic_round_replay_5_24"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/playbackFragment_playPause"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <ImageButton
                 android:id="@+id/playbackFragment_playPause"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
+                android:layout_width="66dp"
+                android:layout_height="66dp"
 
-                android:layout_marginBottom="25dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-
-                android:src="@drawable/ic_baseline_pause_circle_filled_24"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/ic_round_pause_circle_24"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -77,7 +81,7 @@
                 android:layout_marginBottom="28dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
 
-                android:src="@drawable/ic_baseline_forward_5_24"
+                android:src="@drawable/ic_round_forward_5_24"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/playbackFragment_playPause" />
