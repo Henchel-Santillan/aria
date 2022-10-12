@@ -1,7 +1,6 @@
 package com.example.aria.ui.fragment;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -166,9 +165,10 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
         // Compare the previous fileName to the name set by the user in the NameRecordingDialogFragment
         // If they are the same, no action is required; otherwise, the innermost file in the path must be renamed
-        if (!fileName.equals(name) && canWriteToExternalStorage) {
+        String fullyQualifiedFileName = fileName + ".mp4";
+        if (!fullyQualifiedFileName.equals(name) && canWriteToExternalStorage) {
             File file = new File(filePath);
-            boolean renamed = new File(recordingPath + fileName).renameTo(file);
+            boolean renamed = new File(recordingPath + fullyQualifiedFileName).renameTo(file);
             Log.d(LOG_TAG, "Recording name specified by user replaces auto-generated name: " + renamed);
         }
 
@@ -211,10 +211,10 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
         fileName = dateFormat.format(new Date()) + "_recording";
 
         // Attempt to obtain the file path to the system recordings
-        File recordingDir = getAppSpecificRecordingsStorageDir(requireContext(), "");
+        File recordingDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_RECORDINGS);
         if (recordingDir != null)
             recordingPath = recordingDir.getAbsolutePath() + "/";
-        recorder.setOutputFile(recordingPath + fileName);
+        recorder.setOutputFile(recordingPath + fileName + ".mp4");
 
         try {
             recorder.prepare();
@@ -276,15 +276,6 @@ public class RecordFragment extends Fragment implements DiscardRecordingDialogFr
 
     private boolean isExternalStorageWritable() {
         return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
-    }
-
-    @Nullable
-    private File getAppSpecificRecordingsStorageDir(@NonNull Context context, String dirName) {
-        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_RECORDINGS), dirName);
-        if (file == null || !file.mkdirs()) {
-            Log.e(LOG_TAG, "Directory not created");
-        }
-        return file;
     }
 
 }

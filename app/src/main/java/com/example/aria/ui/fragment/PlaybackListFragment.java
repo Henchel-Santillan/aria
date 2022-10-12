@@ -145,6 +145,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
                 // Start the PlaybackActivity using an Intent, passing over the paths to the audio and amplitude files
                 Intent intent = new Intent(requireActivity(), PlaybackActivity.class);
                 intent.putExtra("title", record.title);
+                intent.putExtra("duration", record.duration);
                 intent.putExtra("filePath", record.filePath);
                 intent.putExtra("amplitudePath", record.amplitudePath);
                 requireActivity().startActivity(intent);
@@ -259,7 +260,7 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
         // Show a snackbar
         String message = "Recording name changed to " + name + ".";
         Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
-                message, Snackbar.LENGTH_LONG);
+                message, Snackbar.LENGTH_SHORT);
         snackbar.setAction(R.string.common_actionSnackBar, (scopedView) -> snackbar.dismiss());
         snackbar.show();
 
@@ -291,14 +292,14 @@ public class PlaybackListFragment extends Fragment implements NameRecordingDialo
     // TODO: Make a Snackbar "Builder" class to simplify creation without action
     private void showSingleDeleteUndoSnackbar(AudioRecord removed) {
         Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
-                R.string.playbackListFragment_recordDelete, Snackbar.LENGTH_SHORT);
+                R.string.playbackListFragment_recordDelete, Snackbar.LENGTH_LONG);
         snackbar.setAction(R.string.playbackListFragment_undoDelete, (scopedView) -> viewModel.insertRecord(removed));
         snackbar.show();
     }
 
     private void showMultiDeleteUndoSnackbar(List<AudioRecord> removed) {
         Snackbar snackbar = Snackbar.make(binding.playbackListFragmentRecordRecyclerView,
-                R.string.playbackListFragment_recordsDelete, Snackbar.LENGTH_SHORT);
+                R.string.playbackListFragment_recordsDelete, Snackbar.LENGTH_LONG);
 
         snackbar.setAction(R.string.playbackListFragment_undoDelete, (scopedView) -> {
             for (AudioRecord record : removed)

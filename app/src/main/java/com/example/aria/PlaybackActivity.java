@@ -41,7 +41,7 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
 
     // UI Controller
     private ActivityPlaybackBinding binding;
-    private String amplitudePath;
+    private String amplitudePath, recordDuration;
 
     // MediaPlayer API
     private String recordTitle, filePath;
@@ -67,6 +67,7 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             recordTitle = extras.getString("title");
+            recordDuration = extras.getString("duration");
             filePath = extras.getString("filePath");
             amplitudePath = extras.getString("amplitudePath");
         }
@@ -79,11 +80,6 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
 
         // Otherwise if permission given, initialize the MediaPlayer with the given filePath and configure the UI
         mediaPlayer = new MediaPlayer();
-
-        // Set the listeners for completion (media reaches end of playback), error and info, and prepare
-        mediaPlayer.setOnCompletionListener(this);
-        mediaPlayer.setOnErrorListener(this);
-        mediaPlayer.setOnInfoListener(this);
         mediaPlayer.setOnPreparedListener(this);
 
         try {
@@ -94,39 +90,20 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
             mediaPlayer.reset();    // Restore MediaPlayer to IDLE state
         }
 
+        // Set the listeners for completion (media reaches end of playback), error and info, and prepare
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnErrorListener(this);
+        mediaPlayer.setOnInfoListener(this);
+
         // Set up handler to synchronize the MediaPlayer with the SeekBar
         handler = new Handler(Looper.getMainLooper());
         runnable = () -> {
-            binding.playbackFragmentSeekbar.setProgress(mediaPlayer.getCurrentPosition());
+            binding.playbackActivitySeekbar.setProgress(mediaPlayer.getCurrentPosition());
             handler.postDelayed(runnable, DELAY);
         };
 
-        // Add click listeners to the buttons
-        binding.playbackFragmentPlayPause.setOnClickListener((view) -> {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.pause();
-                handler.postDelayed(runnable, DELAY);
-                binding.playbackFragmentPlayPause.setBackground(AppCompatResources.getDrawable(this, R.drawable.ic_round_play_circle_24));
-            }
-            else {
-                mediaPlayer.start();
-                handler.removeCallbacks(runnable);
-                binding.playbackFragmentPlayPause.setBackground(AppCompatResources.getDrawable(this, R.drawable.ic_round_pause_circle_24));
-            }
-        });
-
-        binding.playbackFragmentBackFive.setOnClickListener((view) -> {
-            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() - SEEK_SKIP);
-            binding.playbackFragmentSeekbar.setProgress(binding.playbackFragmentSeekbar.getProgress() - SEEK_SKIP);
-        });
-
-        binding.playbackFragmentSkipFive.setOnClickListener((view) -> {
-            mediaPlayer.seekTo(mediaPlayer.getCurrentPosition() + SEEK_SKIP);
-            binding.playbackFragmentSeekbar.setProgress(binding.playbackFragmentSeekbar.getProgress() + SEEK_SKIP);
-        });
-
         // Add listener to the SeekBar
-        binding.playbackFragmentSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        binding.playbackActivitySeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean changed) {
                 if (changed)
@@ -140,8 +117,35 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
             public void onStopTrackingTouch(SeekBar seekBar) { /* No-op */ }
         });
 
-        // Set the maximum length of the SeekBar equal to that of the duration of the playing media
-        binding.playbackFragmentSeekbar.setMax(mediaPlayer.getDuration());
+        // Add click listeners to the buttons
+        binding.playbackActivityPlayPause.setOnClickListener((view) -> {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.pause();
+                handler.removeCallbacks(runnable);
+                binding.playbackActivityPlayPause.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_round_play_circle_48));
+            }
+            else {
+                mediaPlayer.start();
+                handler.postDelayed(runnable, DELAY);
+                binding.playbackActivityPlayPause.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_round_pause_circle_48));
+            }
+        });
+
+        binding.playbackActivityBackFive.setOnClickListener((view) -> {
+            mediaPlayer.seekTo(Math.max(0, mediaPlayer.getCurrentPosition() - SEEK_SKIP));
+            binding.playbackActivitySeekbar.setProgress(binding.playbackActivitySeekbar.getProgress() - SEEK_SKIP);
+        });
+
+        binding.playbackActivitySkipFive.setOnClickListener((view) -> {
+            mediaPlayer.seekTo(Math.min(mediaPlayer.getCurrentPosition() + SEEK_SKIP, mediaPlayer.getDuration()));
+            binding.playbackActivitySeekbar.setProgress(binding.playbackActivitySeekbar.getProgress() + SEEK_SKIP);
+        });
+
+        // Show the title of the record
+        binding.playbackActivityTitleLabel.setText(recordTitle);
+
+        // Add the duration to the label
+        binding.playbackActivityDurationLabel.setText(recordDuration);
     }
 
     @Override
@@ -182,7 +186,7 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
     public void onCompletion(MediaPlayer mediaPlayer) {
         if (mediaPlayer != null) {
             handler.removeCallbacks(runnable);
-            mediaPlayer.stop();
+            binding.playbackActivityPlayPause.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.ic_round_play_circle_48));
         }
     }
 
@@ -227,6 +231,8 @@ public class PlaybackActivity extends AppCompatActivity implements MediaPlayer.O
     public void onPrepared(@NonNull MediaPlayer mediaPlayer) {
         mediaPlayer.start();
         handler.postDelayed(runnable, DELAY);
+        // Set the maximum length of the SeekBar equal to that of the duration of the playing media
+        binding.playbackActivitySeekbar.setMax(mediaPlayer.getDuration());
     }
 
 }

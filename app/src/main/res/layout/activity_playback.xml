@@ -14,21 +14,34 @@
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             app:layout_constraintTop_toTopOf="parent" />
         
+        <TextView
+            android:id="@+id/playbackActivity_titleLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+        
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="20dp"
-            app:layout_constraintBottom_toTopOf="@id/playbackFragment_layoutControls">
+            app:layout_constraintBottom_toTopOf="@id/playbackActivity_layoutControls">
 
             <SeekBar
-                android:id="@+id/playbackFragment_seekbar"
+                android:id="@+id/playbackActivity_seekbar"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
             <TextView
-                android:id="@+id/playbackFragment_durationLabel"
+                android:id="@+id/playbackActivity_durationLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
@@ -41,7 +54,7 @@
         </LinearLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/playbackFragment_layoutControls"
+            android:id="@+id/playbackActivity_layoutControls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="40dp"
@@ -50,7 +63,7 @@
             app:layout_constraintStart_toStartOf="parent">
 
             <ImageButton
-                android:id="@+id/playbackFragment_backFive"
+                android:id="@+id/playbackActivity_backFive"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
 
@@ -59,22 +72,24 @@
 
                 android:src="@drawable/ic_round_replay_5_24"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/playbackFragment_playPause"
+                app:layout_constraintEnd_toStartOf="@id/playbackActivity_playPause"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <ImageButton
-                android:id="@+id/playbackFragment_playPause"
+                android:id="@+id/playbackActivity_playPause"
                 android:layout_width="66dp"
                 android:layout_height="66dp"
 
                 android:layout_marginBottom="16dp"
-                android:background="@drawable/ic_round_pause_circle_24"
+                android:src="@drawable/ic_round_pause_circle_48"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <ImageButton
-                android:id="@+id/playbackFragment_skipFive"
+                android:id="@+id/playbackActivity_skipFive"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
 
@@ -84,7 +99,7 @@
                 android:src="@drawable/ic_round_forward_5_24"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/playbackFragment_playPause" />
+                app:layout_constraintStart_toEndOf="@id/playbackActivity_playPause" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
